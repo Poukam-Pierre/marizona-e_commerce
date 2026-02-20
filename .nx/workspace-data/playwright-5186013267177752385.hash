@@ -1,0 +1,2388 @@
+{
+  "3043324426318553034": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "6956967609645777795": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "7921633735267695791": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "12294857943100200078": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "264098026000678694": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "10225136368156805720": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "14673670732792012377": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "3547863818235958101": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "18017211640688975685": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "8557161799892133665": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "7237526177549372439": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "9322021310829210629": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "906001607317739484": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "admin"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/admin-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  },
+  "779054676185597955": {
+    "targets": {
+      "e2e": {
+        "command": "playwright test",
+        "options": {
+          "cwd": "{projectRoot}"
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ]
+      },
+      "e2e-ci--src/example.spec.ts": {
+        "command": "playwright test src/example.spec.ts --output=../../dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+        "options": {
+          "cwd": "{projectRoot}",
+          "env": {
+            "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_HTML_REPORT": "../../dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+            "PLAYWRIGHT_BLOB_OUTPUT_FILE": "../../dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+          }
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in src/example.spec.ts in CI",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        },
+        "dependsOn": [
+          {
+            "projects": [
+              "storefront"
+            ],
+            "target": "dev"
+          }
+        ],
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report/src-example-spec-ts",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report/src-example-spec-ts.zip"
+        ]
+      },
+      "e2e-ci": {
+        "executor": "nx:noop",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/test-output",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report",
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/blob-report"
+        ],
+        "dependsOn": [
+          {
+            "target": "e2e-ci--src/example.spec.ts",
+            "projects": "self",
+            "params": "forward",
+            "options": "forward"
+          }
+        ],
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Runs Playwright Tests in CI",
+          "nonAtomizedTarget": "e2e",
+          "help": {
+            "command": "bun playwright test --help",
+            "example": {
+              "options": {
+                "workers": 1
+              }
+            }
+          }
+        }
+      },
+      "e2e-ci--merge-reports": {
+        "executor": "@nx/playwright:merge-reports",
+        "cache": true,
+        "inputs": [
+          "default",
+          "^production",
+          {
+            "externalDependencies": [
+              "@playwright/test"
+            ]
+          }
+        ],
+        "outputs": [
+          "{workspaceRoot}/dist/.playwright/apps/storefront-e2e/playwright-report"
+        ],
+        "options": {
+          "config": "playwright.config.ts",
+          "expectedSuites": 1
+        },
+        "metadata": {
+          "technologies": [
+            "playwright"
+          ],
+          "description": "Merges Playwright blob reports from atomized tasks to produce unified reports for the configured reporters."
+        }
+      }
+    },
+    "metadata": {
+      "targetGroups": {
+        "E2E (CI)": [
+          "e2e-ci--src/example.spec.ts",
+          "e2e-ci",
+          "e2e-ci--merge-reports"
+        ]
+      }
+    }
+  }
+}

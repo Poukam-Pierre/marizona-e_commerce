@@ -1,0 +1,28 @@
+# ============================================================================
+# ConfigMap
+# ============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopnx-config
+data:
+  api-url: "https://api.shopnx.com/api/v1"
+  admin-api-url: "https://api.shopnx.com/api/v1"
+  storefront-url: "https://shopnx.com"
+  admin-url: "https://admin.shopnx.com"
+---
+# ============================================================================
+# Secrets Template (Use sealed-secrets or external-secrets in production)
+# ============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shopnx-secrets
+type: Opaque
+stringData:
+  database-url: "postgresql://shopnx:CHANGE_ME@postgres:5432/shopnx?schema=public"
+  redis-url: "redis://:CHANGE_ME@redis:6379"
+  jwt-secret: "CHANGE_ME_TO_SECURE_SECRET"
+  jwt-refresh-secret: "CHANGE_ME_TO_SECURE_SECRET"
+  vapid-public-key: ""
+  vapid-private-key: ""

@@ -1,0 +1,198 @@
+// API Types
+export interface Product {
+  id: string;
+  sku: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  type: 'PHYSICAL' | 'DIGITAL';
+  price: number;
+  comparePrice: number | null;
+  inventoryQuantity: number;
+  inventoryTracked: boolean;
+  lowStockThreshold: number;
+  downloadUrl: string | null;
+  ownerName: string | null;
+  ownerWhatsapp: string | null;
+  categoryId: string | null;
+  image: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  viewCount: number;
+  soldCount: number;
+  rating: number | null;
+  reviewCount: number;
+  createdAt: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  images: Array<{
+    id: string;
+    url: string;
+    alt: string | null;
+    order: number;
+    isPrimary: boolean;
+  }>;
+  variants: Array<{
+    id: string;
+    sku: string;
+    name: string;
+    price: number;
+    comparePrice: number | null;
+    inventoryQuantity: number;
+    option1Name: string | null;
+    option1Value: string | null;
+    option2Name: string | null;
+    option2Value: string | null;
+    isActive: boolean;
+  }>;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  parentId: string | null;
+  order: number;
+  isActive: boolean;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string;
+  customerWhatsapp: string | null;
+  shippingName: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingProvince: string;
+  shippingPostalCode: string;
+  shippingCountry: string;
+  subtotal: number;
+  discount: number;
+  shippingCost: number;
+  tax: number;
+  total: number;
+  currency: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  createdAt: string;
+  items: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  productId: string | null;
+  productSku: string;
+  productName: string;
+  productImage: string | null;
+  variantId: string | null;
+  variantName: string | null;
+  unitPrice: number;
+  totalPrice: number;
+  quantity: number;
+  productType: 'PHYSICAL' | 'DIGITAL';
+}
+
+export type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'PARTIAL';
+
+export type PaymentMethod =
+  | 'WHATSAPP'
+  | 'BANK_TRANSFER'
+  | 'CREDIT_CARD'
+  | 'E_WALLET'
+  | 'COD';
+
+// API Response Types
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  timestamp: string;
+  path: string;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Query Types
+export interface ProductQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: 'PHYSICAL' | 'DIGITAL';
+  categoryId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+// Create Order DTO
+export interface CreateOrderDto {
+  customerName: string;
+  customerEmail?: string;
+  customerPhone: string;
+  customerWhatsapp?: string;
+  shippingName: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingProvince: string;
+  shippingPostalCode: string;
+  shippingCountry?: string;
+  items: Array<{
+    productId: string;
+    variantId?: string;
+    quantity: number;
+  }>;
+  customerNotes?: string;
+}
+
+// Cart Types
+export interface CartItem {
+  productId: string;
+  productName: string;
+  productSku: string;
+  productImage: string | null;
+  productType: 'PHYSICAL' | 'DIGITAL';
+  price: number;
+  quantity: number;
+  variantId?: string;
+  variantName?: string;
+  ownerWhatsapp?: string | null;
+}

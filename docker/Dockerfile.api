@@ -1,0 +1,96 @@
+# ============================================================================
+# ShopNx API - Production Dockerfile
+# Multi-stage build for NestJS application with Bun
+# ============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Base
+# -----------------------------------------------------------------------------
+FROM oven/bun:1 AS base
+
+WORKDIR /app
+
+# Install dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# Stage 2: Dependencies
+# -----------------------------------------------------------------------------
+FROM base AS deps
+
+# Copy package files
+COPY package.json bun.lockb pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY libs/types/package.json ./libs/types/
+COPY libs/config/package.json ./libs/config/
+COPY libs/utils/package.json ./libs/utils/
+COPY libs/database/package.json ./libs/database/
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# -----------------------------------------------------------------------------
+# Stage 3: Builder
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
+COPY apps/api ./apps/api
+COPY libs ./libs
+COPY prisma ./prisma
+COPY tsconfig.base.json ./
+COPY nx.json ./
+COPY package.json ./
+
+# Generate Prisma client
+RUN bun run db:generate
+
+# Build the application
+RUN bunx nx build api
+
+# -----------------------------------------------------------------------------
+# Stage 4: Production
+# -----------------------------------------------------------------------------
+FROM oven/bun:1-slim AS production
+
+WORKDIR /app
+
+# Set NODE_ENV
+ENV NODE_ENV=production
+ENV PORT=3002
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+# Copy built application
+COPY --from=builder /app/dist/apps/api ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./
+
+# Generate Prisma client in production image
+RUN bun run db:generate
+
+# Set ownership
+RUN chown -R nestjs:nodejs /app
+
+# Switch to non-root user
+USER nestjs
+
+# Expose port
+EXPOSE 3002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3002/api/v1/health || exit 1
+
+# Start the application
+CMD ["bun", "run", "dist/main.js"]

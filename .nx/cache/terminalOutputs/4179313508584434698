@@ -1,0 +1,147 @@
+> eslint .
+
+(node:15112) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/next.config.js[24m[0m
+[0m  [2m3:1[22m  [33mwarning[39m  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/api/hello/route.ts[24m[0m
+[0m  [2m1:27[22m  [33mwarning[39m  'request' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/cart/page.tsx[24m[0m
+[0m  [2m3:10[22m  [33mwarning[39m  'useState' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/checkout/page.tsx[24m[0m
+[0m    [2m9:3[22m   [33mwarning[39m  'Phone' is defined but never used                      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m10:3[22m   [33mwarning[39m  'Mail' is defined but never used                       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m13:3[22m   [33mwarning[39m  'Building2' is defined but never used                  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m57:9[22m   [33mwarning[39m  'router' is assigned a value but never used            [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m62:25[22m  [33mwarning[39m  'setSameAsBilling' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m136:43[22m  [33mwarning[39m  Unexpected any. Specify a different type               [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m136:59[22m  [33mwarning[39m  Unexpected any. Specify a different type               [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/page.tsx[24m[0m
+[0m    [2m3:20[22m  [33mwarning[39m  'useMemo' is defined but never used       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m26:10[22m  [33mwarning[39m  'Separator' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m89:24[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m330:16[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m336:14[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m348:53[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m350:25[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m354:40[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m355:33[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m376:38[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/product/[id]/page.tsx[24m[0m
+[0m    [2m3:10[22m  [33mwarning[39m  'use' is defined but never used             [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m28:3[22m   [33mwarning[39m  'Select' is defined but never used          [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m29:3[22m   [33mwarning[39m  'SelectContent' is defined but never used   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m30:3[22m   [33mwarning[39m  'SelectItem' is defined but never used      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m31:3[22m   [33mwarning[39m  'SelectTrigger' is defined but never used   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m32:3[22m   [33mwarning[39m  'SelectValue' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m41:20[22m  [33mwarning[39m  'items' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m72:20[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m   [2m72:61[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m220:40[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/layout/header.tsx[24m[0m
+[0m   [2m5:67[22m  [33mwarning[39m  'User' is defined but never used                 [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m28:23[22m  [33mwarning[39m  'totalPrice' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/product/product-card.tsx[24m[0m
+[0m   [2m22:20[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m   [2m22:61[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m101:21[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/input.tsx[24m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-object-type[22m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-interface[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/pwa-install-prompt.tsx[24m[0m
+[0m  [2m26:88[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/textarea.tsx[24m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-object-type[22m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-interface[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/services/api.ts[24m[0m
+[0m  [2m49:44[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[31m[1m✖ 41 problems (4 errors, 37 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[31m[1m  2 errors and 1 warning potentially fixable with the `--fix` option.[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
+> eslint .
+
+(node:15112) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/next.config.js[24m[0m
+[0m  [2m3:1[22m  [33mwarning[39m  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-var-requires')[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/api/hello/route.ts[24m[0m
+[0m  [2m1:27[22m  [33mwarning[39m  'request' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/cart/page.tsx[24m[0m
+[0m  [2m3:10[22m  [33mwarning[39m  'useState' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/checkout/page.tsx[24m[0m
+[0m    [2m9:3[22m   [33mwarning[39m  'Phone' is defined but never used                      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m10:3[22m   [33mwarning[39m  'Mail' is defined but never used                       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m13:3[22m   [33mwarning[39m  'Building2' is defined but never used                  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m57:9[22m   [33mwarning[39m  'router' is assigned a value but never used            [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m62:25[22m  [33mwarning[39m  'setSameAsBilling' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m136:43[22m  [33mwarning[39m  Unexpected any. Specify a different type               [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m136:59[22m  [33mwarning[39m  Unexpected any. Specify a different type               [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/page.tsx[24m[0m
+[0m    [2m3:20[22m  [33mwarning[39m  'useMemo' is defined but never used       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m26:10[22m  [33mwarning[39m  'Separator' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m89:24[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m330:16[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m336:14[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m348:53[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m350:25[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m354:40[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m355:33[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m376:38[22m  [33mwarning[39m  Forbidden non-null assertion              [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/app/product/[id]/page.tsx[24m[0m
+[0m    [2m3:10[22m  [33mwarning[39m  'use' is defined but never used             [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m28:3[22m   [33mwarning[39m  'Select' is defined but never used          [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m29:3[22m   [33mwarning[39m  'SelectContent' is defined but never used   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m30:3[22m   [33mwarning[39m  'SelectItem' is defined but never used      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m31:3[22m   [33mwarning[39m  'SelectTrigger' is defined but never used   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m32:3[22m   [33mwarning[39m  'SelectValue' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m41:20[22m  [33mwarning[39m  'items' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m72:20[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m   [2m72:61[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m220:40[22m  [33mwarning[39m  Forbidden non-null assertion                [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/layout/header.tsx[24m[0m
+[0m   [2m5:67[22m  [33mwarning[39m  'User' is defined but never used                 [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m28:23[22m  [33mwarning[39m  'totalPrice' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/product/product-card.tsx[24m[0m
+[0m   [2m22:20[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m   [2m22:61[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m  [2m101:21[22m  [33mwarning[39m  Forbidden non-null assertion  [2m@typescript-eslint/no-non-null-assertion[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/input.tsx[24m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-object-type[22m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-interface[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/pwa-install-prompt.tsx[24m[0m
+[0m  [2m26:88[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/components/ui/textarea.tsx[24m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-object-type[22m[0m
+[0m  [2m5:18[22m  [31merror[39m  An interface declaring no members is equivalent to its supertype  [2m@typescript-eslint/no-empty-interface[22m[0m
+[0m[0m
+[0m[4m/home/z/my-project/apps/storefront/src/services/api.ts[24m[0m
+[0m  [2m49:44[22m  [33mwarning[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[31m[1m✖ 41 problems (4 errors, 37 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[31m[1m  2 errors and 1 warning potentially fixable with the `--fix` option.[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
+Warning: command "eslint ." exited with non-zero status code

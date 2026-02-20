@@ -1,0 +1,45 @@
+# ============================================================================
+# Staging Overlay
+# ============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: shopnx-staging
+
+resources:
+  - ../../base
+
+commonLabels:
+  environment: staging
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: api
+    spec:
+      replicas: 1
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: storefront
+    spec:
+      replicas: 1
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: admin
+    spec:
+      replicas: 1
+
+configMapGenerator:
+  - name: shopnx-config
+    behavior: replace
+    data:
+      api-url: "https://api-staging.shopnx.com/api/v1"
+      admin-api-url: "https://api-staging.shopnx.com/api/v1"
+      storefront-url: "https://staging.shopnx.com"
+      admin-url: "https://admin-staging.shopnx.com"

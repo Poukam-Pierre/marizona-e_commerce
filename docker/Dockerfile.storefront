@@ -1,0 +1,91 @@
+# ============================================================================
+# ShopNx Storefront - Production Dockerfile
+# Multi-stage build for Next.js with standalone output and Bun
+# ============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Base
+# -----------------------------------------------------------------------------
+FROM oven/bun:1 AS base
+
+WORKDIR /app
+
+# Install dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# Stage 2: Dependencies
+# -----------------------------------------------------------------------------
+FROM base AS deps
+
+# Copy package files
+COPY package.json bun.lockb pnpm-workspace.yaml ./
+COPY apps/storefront/package.json ./apps/storefront/
+COPY libs/types/package.json ./libs/types/
+COPY libs/config/package.json ./libs/config/
+COPY libs/utils/package.json ./libs/utils/
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# -----------------------------------------------------------------------------
+# Stage 3: Builder
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
+COPY apps/storefront ./apps/storefront
+COPY libs ./libs
+COPY tsconfig.base.json ./
+COPY nx.json ./
+COPY package.json ./
+
+# Build the application (standalone output)
+RUN bunx nx build storefront
+
+# -----------------------------------------------------------------------------
+# Stage 4: Production
+# -----------------------------------------------------------------------------
+FROM oven/bun:1-slim AS production
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy the standalone output
+COPY --from=builder /app/apps/storefront/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./.next/static
+
+# Set ownership
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Start the application
+CMD ["bun", "run", "server.js"]

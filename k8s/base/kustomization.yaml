@@ -1,0 +1,16 @@
+# ============================================================================
+# Kustomize Base
+# ============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - configmap.yaml
+  - api-deployment.yaml
+  - storefront-deployment.yaml
+  - admin-deployment.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: shopnx
+  app.kubernetes.io/part-of: shopnx-platform

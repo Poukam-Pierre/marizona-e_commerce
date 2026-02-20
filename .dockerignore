@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Development files
+*.log
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Docker
+docker
+Dockerfile*
+docker-compose*.yml
+
+# Testing
+coverage
+.nyc_output
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+**/test
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Misc
+.DS_Store
+*.pem
+dev.log

@@ -1,0 +1,61 @@
+{
+  "name": "storefront",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/storefront",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "dev": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "storefront:build",
+        "dev": true,
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "storefront:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "storefront:build:production",
+          "dev": false
+        }
+      }
+    },
+    "build": {
+      "executor": "@nx/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/storefront"
+      },
+      "configurations": {
+        "development": {
+          "outputPath": "apps/storefront"
+        },
+        "production": {}
+      }
+    },
+    "start": {
+      "executor": "@nx/next:server",
+      "defaultConfiguration": "production",
+      "options": {
+        "buildTarget": "storefront:build",
+        "dev": false,
+        "port": 3000
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "storefront:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "storefront:build:production",
+          "dev": false
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 2, "column": 0}, "map": {"version":3,"sources":["file:///home/poukam-tech/project/marizona/apps/admin/src/app/global.css"],"sourcesContent":["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');\n\n* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\n\nhtml {\n  scroll-behavior: smooth;\n}\n\nbody {\n  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\n/* Custom scrollbar */\n::-webkit-scrollbar {\n  width: 8px;\n  height: 8px;\n}\n\n::-webkit-scrollbar-track {\n  background: rgba(0, 0, 0, 0.05);\n}\n\n::-webkit-scrollbar-thumb {\n  background: rgba(0, 0, 0, 0.2);\n  border-radius: 4px;\n}\n\n::-webkit-scrollbar-thumb:hover {\n  background: rgba(0, 0, 0, 0.3);\n}\n\n/* Dark mode scrollbar */\n.dark ::-webkit-scrollbar-track {\n  background: rgba(255, 255, 255, 0.05);\n}\n\n.dark ::-webkit-scrollbar-thumb {\n  background: rgba(255, 255, 255, 0.2);\n}\n\n.dark ::-webkit-scrollbar-thumb:hover {\n  background: rgba(255, 255, 255, 0.3);\n}\n"],"names":[],"mappings":"AAEA;;;;;;AAMA;;;;AAIA;;;;;;AAOA;;;;;AAKA;;;;AAIA;;;;;AAKA;;;;AAKA;;;;AAIA;;;;AAIA"}}]
+}
