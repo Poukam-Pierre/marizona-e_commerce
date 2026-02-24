@@ -22,7 +22,7 @@ node_modules
 
 # misc
 .DS_Store
-*.
+*.pem
 /.sass-cache
 /connect.lock
 /libpeerconnection.log
@@ -35,7 +35,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-.env.*
 .project
 .c9/
 *.launch
@@ -86,4 +85,19 @@ api.json
 package.local.json
 package-lock.local.json
 tsconfig.tsbuildinfo
-pnpm-lock.yaml
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Docker
+.dockerignore.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache
