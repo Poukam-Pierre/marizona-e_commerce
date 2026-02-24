@@ -1,7 +1,0 @@
-[00:00:03.985] Server  LOG      ✓ Ready in 3.4s
-[00:04:12.096] Server  LOG      ○ Compiling / ...
-[00:04:18.663] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:04:41.189] Browser WARN    Image with src "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
-Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
-[00:12:14.762] Browser WARN    Image with src "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=500" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
-[00:12:14.762] Browser WARN    Image with src "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes

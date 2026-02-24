@@ -1,6 +1,0 @@
-> webpack-cli build --node-env=production
-
-[1mLOG from GeneratePackageJsonPlugin[39m[22m
-<w> [1m[33mBun lockfile generation is not supported. Only package.json will be generated.[39m[22m
-
-webpack compiled [1m[32msuccessfully[39m[22m (22cfabbc4fdd81d3)
