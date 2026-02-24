@@ -21,7 +21,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       // Small delay to ensure state is fully synced
       const timer = setTimeout(() => {
         setInitialized(true);
-      }, 50);
+      }, 50); // delay set to 50ms to allow state to stabilize
       return () => clearTimeout(timer);
     }
   }, [hydrated]);

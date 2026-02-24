@@ -1,4 +1,10 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -14,9 +20,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const redisUrl = this.configService?.get<string>('redis.url');
 
     if (!redisUrl) {
-      this.logger.warn(
-        'Redis URL not configured. Caching will be disabled.',
-      );
+      this.logger.warn('Redis URL not configured. Caching will be disabled.');
       return;
     }
 
@@ -180,17 +184,29 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Health check
    */
-  async healthCheck(): Promise<{ status: string; latency?: number }> {
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'unhealthy' | 'not_configured';
+    latency?: number;
+    message?: string;
+  }> {
     if (!this.isAvailable()) {
-      return { status: 'disconnected' };
+      return { status: 'not_configured', message: 'Redis is not configured' };
     }
 
     try {
       const start = Date.now();
       await this.client!.ping();
-      return { status: 'healthy', latency: Date.now() - start };
-    } catch {
-      return { status: 'unhealthy' };
+      return {
+        status: 'healthy',
+        latency: Date.now() - start,
+        message: 'Redis is responsive',
+      };
+    } catch (error: any) {
+      this.logger.error('Redis health check failed', error);
+      return {
+        status: 'unhealthy',
+        message: `Redis health check failed: ${error.message}`,
+      };
     }
   }
 }

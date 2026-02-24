@@ -16,6 +16,7 @@ import type {
   DashboardStats,
   LowStockProduct,
   RecentOrder,
+  HealthCheckResponse,
 } from '@/types';
 
 const API_URL = '/api/v1';
@@ -77,7 +78,7 @@ class ApiService {
   async fetch<T>(
     endpoint: string,
     options: RequestInit = {},
-    retry = true
+    retry = true,
   ): Promise<T> {
     const token = await this.getValidToken();
 
@@ -111,8 +112,13 @@ class ApiService {
         });
 
         if (!retryResponse.ok) {
-          const error = await retryResponse.json().catch(() => ({ message: 'Request failed' }));
-          throw new ApiError(error.message || `HTTP error ${retryResponse.status}`, retryResponse.status);
+          const error = await retryResponse
+            .json()
+            .catch(() => ({ message: 'Request failed' }));
+          throw new ApiError(
+            error.message || `HTTP error ${retryResponse.status}`,
+            retryResponse.status,
+          );
         }
 
         const data = await retryResponse.json();
@@ -124,8 +130,31 @@ class ApiService {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiError(error.message || `HTTP error ${response.status}`, response.status);
+      const error = await response
+        .json()
+        .catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(
+        error.message || `HTTP error ${response.status}`,
+        response.status,
+      );
+    }
+
+    const data = await response.json();
+    return data.data ?? data;
+  }
+
+  // Health Check
+  async checkHealth(): Promise<HealthCheckResponse> {
+    const response = await fetch(`${API_URL}/health`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      return {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+      };
     }
 
     const data = await response.json();
@@ -141,7 +170,9 @@ class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Login failed' }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: 'Login failed' }));
       throw new ApiError(error.message || 'Login failed', response.status);
     }
 
@@ -200,7 +231,9 @@ class ApiService {
       });
     }
     const query = searchParams.toString();
-    return this.fetch<PaginatedResponse<Product>>(`/products${query ? `?${query}` : ''}`);
+    return this.fetch<PaginatedResponse<Product>>(
+      `/products${query ? `?${query}` : ''}`,
+    );
   }
 
   async getProduct(id: string): Promise<Product> {
@@ -225,7 +258,10 @@ class ApiService {
     return this.fetch<void>(`/products/${id}`, { method: 'DELETE' });
   }
 
-  async uploadProductImages(productId: string, images: File[]): Promise<Product> {
+  async uploadProductImages(
+    productId: string,
+    images: File[],
+  ): Promise<Product> {
     const token = await this.getValidToken();
     const formData = new FormData();
     images.forEach((image) => {
@@ -241,7 +277,9 @@ class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: 'Upload failed' }));
       throw new ApiError(error.message || 'Upload failed', response.status);
     }
 
@@ -250,7 +288,9 @@ class ApiService {
   }
 
   // Orders
-  async getOrders(params?: QueryParams & { status?: string }): Promise<PaginatedResponse<Order>> {
+  async getOrders(
+    params?: QueryParams & { status?: string },
+  ): Promise<PaginatedResponse<Order>> {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -260,7 +300,9 @@ class ApiService {
       });
     }
     const query = searchParams.toString();
-    return this.fetch<PaginatedResponse<Order>>(`/orders${query ? `?${query}` : ''}`);
+    return this.fetch<PaginatedResponse<Order>>(
+      `/orders${query ? `?${query}` : ''}`,
+    );
   }
 
   async getOrder(id: string): Promise<Order> {

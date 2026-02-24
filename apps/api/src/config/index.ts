@@ -7,7 +7,8 @@ export const appConfig = registerAs('app', () => ({
 }));
 
 export const jwtConfig = registerAs('jwt', () => ({
-  secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
+  secret:
+    process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
   accessTokenExpiration: process.env.JWT_ACCESS_EXPIRATION || '15m',
   refreshTokenExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
 }));
@@ -25,7 +26,7 @@ export const databaseConfig = registerAs('database', () => ({
 
 export const whatsappConfig = registerAs('whatsapp', () => ({
   enabled: process.env.WHATSAPP_ENABLED === 'true',
-  number: process.env.WHATSAPP_NUMBER || '+6281234567890',
+  number: process.env.WHATSAPP_NUMBER || '+237696841451',
 }));
 
 export const uploadConfig = registerAs('upload', () => ({

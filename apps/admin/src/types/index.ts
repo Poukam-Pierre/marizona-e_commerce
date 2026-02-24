@@ -153,7 +153,14 @@ export interface CreateProductDto {
 export type UpdateProductDto = Partial<CreateProductDto>;
 
 // Order Types
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
+export type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'REFUNDED';
 
 export interface OrderItem {
   id: string;
@@ -252,4 +259,25 @@ export interface RecentOrder {
   total: number;
   status: OrderStatus;
   createdAt: string;
+}
+
+// Health Check Types
+export interface HealthCheckResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: string;
+  uptime?: number;
+  version?: string;
+  responseTime?: number;
+  services?: {
+    database: {
+      status: 'healthy' | 'unhealthy';
+      latency?: number;
+      message?: string;
+    };
+    redis: {
+      status: 'healthy' | 'unhealthy' | 'not_configured';
+      latency?: number;
+      message?: string;
+    };
+  };
 }

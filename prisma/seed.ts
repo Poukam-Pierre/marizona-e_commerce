@@ -3,7 +3,13 @@
  * Run with: bun run db:seed
  */
 
-import { PrismaClient, AdminRole, ProductType, OrderStatus, PaymentStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  AdminRole,
+  ProductType,
+  OrderStatus,
+  PaymentStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -15,7 +21,7 @@ async function main() {
   // Create Admin Users
   // ========================================
   console.log('Creating admin users...');
-  
+
   const hashedPassword = await bcrypt.hash('admin123', 10);
 
   const superAdmin = await prisma.adminUser.upsert({
@@ -107,17 +113,19 @@ async function main() {
       sku: 'ELEC-001',
       name: 'Wireless Bluetooth Headphones',
       slug: 'wireless-bluetooth-headphones',
-      description: 'High-quality wireless headphones with noise cancellation and 30-hour battery life.',
+      description:
+        'High-quality wireless headphones with noise cancellation and 30-hour battery life.',
       type: ProductType.PHYSICAL,
       price: 89.99,
       comparePrice: 129.99,
-      costPrice: 45.00,
+      costPrice: 45.0,
       inventoryQuantity: 150,
       inventoryTracked: true,
       lowStockThreshold: 20,
       weight: 0.35,
       categoryId: categories[0].id,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+      image:
+        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
       isActive: true,
       isFeatured: true,
       ownerName: 'Tech Supplies Co.',
@@ -133,7 +141,8 @@ async function main() {
       sku: 'DIGI-001',
       name: 'Complete Web Development Course',
       slug: 'complete-web-development-course',
-      description: 'Learn web development from scratch. Includes HTML, CSS, JavaScript, React, Node.js, and more.',
+      description:
+        'Learn web development from scratch. Includes HTML, CSS, JavaScript, React, Node.js, and more.',
       type: ProductType.DIGITAL,
       price: 49.99,
       comparePrice: 199.99,
@@ -144,7 +153,8 @@ async function main() {
       downloadLimit: 5,
       downloadExpiry: 365,
       categoryId: categories[2].id,
-      image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500',
+      image:
+        'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500',
       isActive: true,
       isFeatured: true,
       isBestSeller: true,
@@ -161,17 +171,19 @@ async function main() {
       sku: 'CLTH-001',
       name: 'Premium Cotton T-Shirt',
       slug: 'premium-cotton-t-shirt',
-      description: '100% organic cotton t-shirt. Comfortable and stylish for everyday wear.',
+      description:
+        '100% organic cotton t-shirt. Comfortable and stylish for everyday wear.',
       type: ProductType.PHYSICAL,
       price: 29.99,
       comparePrice: 39.99,
-      costPrice: 12.00,
+      costPrice: 12.0,
       inventoryQuantity: 500,
       inventoryTracked: true,
       lowStockThreshold: 50,
       weight: 0.2,
       categoryId: categories[1].id,
-      image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500',
+      image:
+        'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500',
       isActive: true,
       ownerName: 'Fashion Hub',
       ownerWhatsapp: '+6281234567892',
@@ -304,17 +316,18 @@ async function main() {
     },
     {
       key: 'store_email',
-      value: JSON.stringify('support@shopnx.com'),
+      value: JSON.stringify('poukamtech@gmail.com'),
       category: 'general',
     },
     {
       key: 'store_phone',
-      value: JSON.stringify('+6281234567890'),
+      value: JSON.stringify('+237696841451'),
       category: 'general',
     },
+    // TODO: Update the setting to used xaf currency
     {
       key: 'currency',
-      value: JSON.stringify({ code: 'IDR', symbol: 'Rp', rate: 15500 }),
+      value: JSON.stringify({ code: 'XAF', symbol: 'FCFA', rate: 1 }),
       category: 'general',
     },
     {
@@ -324,7 +337,7 @@ async function main() {
     },
     {
       key: 'whatsapp_number',
-      value: JSON.stringify('+6281234567890'),
+      value: JSON.stringify('+237696841451'),
       category: 'checkout',
     },
   ];

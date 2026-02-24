@@ -17,9 +17,12 @@ import { CategoriesModule } from '../modules/categories/categories.module';
 import { OrdersModule } from '../modules/orders/orders.module';
 import { InventoryModule } from '../modules/inventory/inventory.module';
 import { NotificationsModule } from '../modules/notifications/notifications.module';
+import { DashboardModule } from '../modules/dashboard/dashboard.module';
 
 // Config
 import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
+import { AppService } from './app.service';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -60,8 +63,10 @@ import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
     OrdersModule,
     InventoryModule,
     NotificationsModule,
+    DashboardModule,
   ],
   providers: [
+    AppService,
     // Global exception filter
     {
       provide: APP_FILTER,
@@ -73,6 +78,7 @@ import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
       useClass: TransformInterceptor,
     },
   ],
+  controllers: [AppController],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
