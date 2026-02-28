@@ -119,10 +119,33 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   category?: Category;
-  images?: ProductImage[];
+  images: ProductImage[];
   variants?: ProductVariant[];
 }
 
+export interface IVariant {
+  sku: string;
+  name: string;
+  option1Name?: string;
+  option1Value?: string;
+  option2Name?: string;
+  option2Value?: string;
+  option3Name?: string;
+  option3Value?: string;
+  price: number;
+  comparePrice?: number;
+  inventoryQuantity: number;
+  weight?: number;
+  image: string;
+  isActive?: boolean;
+}
+
+export interface IImage {
+  url: string;
+  alt?: string;
+  isPrimary: boolean;
+  order?: number;
+}
 export interface CreateProductDto {
   sku: string;
   name: string;
@@ -147,7 +170,8 @@ export interface CreateProductDto {
   isActive?: boolean;
   isFeatured?: boolean;
   isBestSeller?: boolean;
-  images?: { url: string; alt?: string; isPrimary?: boolean }[];
+  images: IImage[];
+  variants?: IVariant[];
 }
 
 export type UpdateProductDto = Partial<CreateProductDto>;

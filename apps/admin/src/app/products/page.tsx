@@ -1,64 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { AdminLayout } from '@/components/layout/admin-layout';
 import {
+  useCategories,
+  useDeleteProduct,
+  useProducts,
+} from '@/hooks/use-queries';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Image as ImageIcon,
+  MoreVert as MoreIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
+import {
+  Avatar,
   Box,
+  Button,
   Card,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Select,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
   TablePagination,
+  TableRow,
   TextField,
-  InputAdornment,
-  Button,
-  IconButton,
-  Chip,
   Typography,
-  Skeleton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  Avatar,
-  Tooltip,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  MoreVert as MoreIcon,
-  FilterList as FilterIcon,
-  Image as ImageIcon,
-  Visibility as ViewIcon,
-} from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { useSnackbar } from 'notistack';
-import { AdminLayout } from '@/components/layout/admin-layout';
-import { useProducts, useCategories, useDeleteProduct } from '@/hooks/use-queries';
+import { useState } from 'react';
 
 function TableSkeleton() {
   return (
     <>
       {[1, 2, 3, 4, 5].map((row) => (
         <TableRow key={row}>
-          <TableCell><Skeleton width={200} /></TableCell>
-          <TableCell><Skeleton width={120} /></TableCell>
-          <TableCell><Skeleton width={80} /></TableCell>
-          <TableCell><Skeleton width={60} /></TableCell>
-          <TableCell><Skeleton width={80} /></TableCell>
-          <TableCell><Skeleton width={100} /></TableCell>
+          <TableCell>
+            <Skeleton width={200} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={120} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={80} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={60} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={80} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={100} />
+          </TableCell>
         </TableRow>
       ))}
     </>
@@ -68,7 +81,7 @@ function TableSkeleton() {
 export default function ProductsPage() {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -78,17 +91,26 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data, isLoading } = useProducts({
+  const { data: products, isLoading: isProductsLoading } = useProducts({
     page: page + 1,
     limit: rowsPerPage,
     search: search || undefined,
     categoryId: categoryFilter || undefined,
+    isActive:
+      statusFilter === 'active'
+        ? true
+        : statusFilter === 'inactive'
+          ? false
+          : undefined,
   });
 
   const { data: categories = [] } = useCategories();
   const deleteProduct = useDeleteProduct();
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, productId: string) => {
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    productId: string,
+  ) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedProduct(productId);
@@ -108,16 +130,20 @@ export default function ProductsPage() {
 
   const handleDelete = () => {
     setDeleteDialogOpen(true);
-    handleMenuClose();
+    setAnchorEl(null);
   };
 
   const confirmDelete = async () => {
+    console.log('Deleting product with ID:', selectedProduct);
     if (selectedProduct) {
       try {
         await deleteProduct.mutateAsync(selectedProduct);
         enqueueSnackbar('Product deleted successfully', { variant: 'success' });
+        setSelectedProduct(null);
       } catch (error: any) {
-        enqueueSnackbar(error.message || 'Failed to delete product', { variant: 'error' });
+        enqueueSnackbar(error.message || 'Failed to delete product', {
+          variant: 'error',
+        });
       }
     }
     setDeleteDialogOpen(false);
@@ -205,9 +231,9 @@ export default function ProductsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading ? (
+              {isProductsLoading ? (
                 <TableSkeleton />
-              ) : data?.data.length === 0 ? (
+              ) : products?.data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">
@@ -216,7 +242,7 @@ export default function ProductsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                data?.data.map((product) => (
+                products?.data.map((product) => (
                   <TableRow
                     key={product.id}
                     hover
@@ -224,7 +250,9 @@ export default function ProductsPage() {
                     onClick={() => router.push(`/products/${product.id}`)}
                   >
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                      >
                         <Avatar
                           variant="rounded"
                           src={product.image || undefined}
@@ -255,7 +283,10 @@ export default function ProductsPage() {
                         {product.comparePrice && (
                           <Typography
                             variant="caption"
-                            sx={{ textDecoration: 'line-through', color: 'text.secondary' }}
+                            sx={{
+                              textDecoration: 'line-through',
+                              color: 'text.secondary',
+                            }}
                           >
                             {formatCurrency(product.comparePrice)}
                           </Typography>
@@ -263,18 +294,22 @@ export default function ProductsPage() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
                         <Typography
                           variant="body2"
                           color={
-                            product.inventoryQuantity <= product.lowStockThreshold
+                            product.inventoryQuantity <=
+                            product.lowStockThreshold
                               ? 'error'
                               : 'text.primary'
                           }
                         >
                           {product.inventoryQuantity}
                         </Typography>
-                        {product.inventoryQuantity <= product.lowStockThreshold && (
+                        {product.inventoryQuantity <=
+                          product.lowStockThreshold && (
                           <Chip label="Low" color="error" size="small" />
                         )}
                       </Box>
@@ -287,7 +322,11 @@ export default function ProductsPage() {
                           size="small"
                         />
                         {product.type === 'DIGITAL' && (
-                          <Chip label="Digital" color="secondary" size="small" />
+                          <Chip
+                            label="Digital"
+                            color="secondary"
+                            size="small"
+                          />
                         )}
                       </Box>
                     </TableCell>
@@ -307,7 +346,7 @@ export default function ProductsPage() {
 
         <TablePagination
           component="div"
-          count={data?.meta.total || 0}
+          count={products?.meta.total || 0}
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
@@ -340,11 +379,15 @@ export default function ProductsPage() {
       </Menu>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
         <DialogTitle>Delete Product</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this product? This action cannot be undone.
+            Are you sure you want to delete this product? This action cannot be
+            undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

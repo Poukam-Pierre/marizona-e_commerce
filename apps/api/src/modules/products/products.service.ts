@@ -177,59 +177,114 @@ export class ProductsService {
     return product;
   }
 
-  async create(dto: CreateProductDto) {
+  async create(payload: CreateProductDto) {
+    const {
+      sku,
+      categoryId,
+      description,
+      images,
+      inventoryQuantity,
+      name,
+      ownerWhatsapp,
+      price,
+      slug,
+      type,
+      comparePrice,
+      costPrice,
+      downloadExpiry,
+      downloadLimit,
+      downloadUrl,
+      height,
+      inventoryTracked,
+      isActive,
+      isBestSeller,
+      isFeatured,
+      length,
+      lowStockThreshold,
+      metaDescription,
+      metaTitle,
+      ownerName,
+      variants,
+      weight,
+      width,
+    } = payload;
+
     // Check if SKU exists
     const existingSku = await this.prisma.product.findUnique({
-      where: { sku: dto.sku },
+      where: { sku },
     });
 
     if (existingSku && !existingSku.deletedAt) {
-      throw new ConflictException(`Product with SKU ${dto.sku} already exists`);
+      throw new ConflictException(`Product with SKU ${sku} already exists`);
     }
 
     // Check if slug exists
     const existingSlug = await this.prisma.product.findUnique({
-      where: { slug: dto.slug },
+      where: { slug },
     });
 
     if (existingSlug && !existingSlug.deletedAt) {
-      throw new ConflictException(`Product with slug ${dto.slug} already exists`);
+      throw new ConflictException(`Product with slug ${slug} already exists`);
     }
+
+    const urlPrimaryImage = images.find((img) => img.isPrimary)?.url;
 
     // Create product
     const product = await this.prisma.product.create({
       data: {
-        sku: dto.sku,
-        name: dto.name,
-        slug: dto.slug,
-        description: dto.description,
-        type: dto.type || 'PHYSICAL',
-        price: dto.price,
-        comparePrice: dto.comparePrice,
-        costPrice: dto.costPrice,
-        inventoryQuantity: dto.inventoryQuantity || 0,
-        inventoryTracked: dto.inventoryTracked ?? true,
-        lowStockThreshold: dto.lowStockThreshold || 10,
-        weight: dto.weight,
-        length: dto.length,
-        width: dto.width,
-        height: dto.height,
-        downloadUrl: dto.downloadUrl,
-        downloadLimit: dto.downloadLimit,
-        downloadExpiry: dto.downloadExpiry,
-        ownerName: dto.ownerName,
-        ownerWhatsapp: dto.ownerWhatsapp,
-        categoryId: dto.categoryId,
-        image: dto.image,
-        isActive: dto.isActive ?? true,
-        isFeatured: dto.isFeatured ?? false,
-        metaTitle: dto.metaTitle,
-        metaDescription: dto.metaDescription,
+        sku,
+        name,
+        slug,
+        description,
+        type,
+        price,
+        comparePrice,
+        costPrice,
+        inventoryQuantity,
+        inventoryTracked,
+        lowStockThreshold,
+        weight,
+        length,
+        width,
+        height,
+        downloadUrl,
+        downloadLimit,
+        downloadExpiry,
+        ownerName,
+        ownerWhatsapp,
+        categoryId,
+        image: urlPrimaryImage,
+        isActive,
+        isFeatured,
+        isBestSeller,
+        metaTitle,
+        metaDescription,
+        // Create images if provided
+        images: images.length
+          ? {
+              create: images.map((img, index) => ({
+                url: img.url,
+                alt: img.alt || name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? index === 0,
+              })),
+            }
+          : undefined,
+        // Create variants if provided
+        variants: variants?.length
+          ? {
+              create: variants.map((variant) => ({
+                ...variant,
+              })),
+            }
+          : undefined,
       },
       include: {
         category: {
           select: { id: true, name: true, slug: true },
         },
+        images: true,
+        variants: true,
       },
     });
 
@@ -257,7 +312,9 @@ export class ProductsService {
       });
 
       if (existingSku && !existingSku.deletedAt) {
-        throw new ConflictException(`Product with SKU ${dto.sku} already exists`);
+        throw new ConflictException(
+          `Product with SKU ${dto.sku} already exists`,
+        );
       }
     }
 
@@ -268,7 +325,9 @@ export class ProductsService {
       });
 
       if (existingSlug && !existingSlug.deletedAt) {
-        throw new ConflictException(`Product with slug ${dto.slug} already exists`);
+        throw new ConflictException(
+          `Product with slug ${dto.slug} already exists`,
+        );
       }
     }
 
@@ -276,7 +335,7 @@ export class ProductsService {
     const product = await this.prisma.product.update({
       where: { id },
       data: {
-        ...dto,
+        // ...dto,
         updatedAt: new Date(),
       },
       include: {
