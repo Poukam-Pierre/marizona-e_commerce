@@ -443,6 +443,7 @@ export default function NewProductPage() {
                       }
                       helperText={formik.touched.price && formik.errors.price}
                       InputProps={{ endAdornment: 'FCFA' }}
+                      inputProps={{ step: 'any' }}
                       disabled={createProduct.isPending}
                     />
                   </Grid>
@@ -456,6 +457,7 @@ export default function NewProductPage() {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       InputProps={{ endAdornment: 'FCFA' }}
+                      inputProps={{ step: 'any' }}
                       disabled={createProduct.isPending}
                       error={
                         formik.touched.comparePrice &&
@@ -477,6 +479,7 @@ export default function NewProductPage() {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       InputProps={{ endAdornment: 'FCFA' }}
+                      inputProps={{ step: 'any' }}
                       disabled={createProduct.isPending}
                       error={
                         formik.touched.costPrice &&

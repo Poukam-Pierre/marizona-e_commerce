@@ -466,6 +466,7 @@ export function VariantBuilder({
                   variantFormik.touched.price && variantFormik.errors.price
                 }
                 InputProps={{ endAdornment: 'FCFA' }}
+                inputProps={{ step: 'any' }}
               />
               <TextField
                 fullWidth
@@ -484,6 +485,7 @@ export function VariantBuilder({
                   variantFormik.errors.comparePrice
                 }
                 InputProps={{ endAdornment: 'FCFA' }}
+                inputProps={{ step: 'any' }}
               />
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -519,6 +521,7 @@ export function VariantBuilder({
                 helperText={
                   variantFormik.touched.weight && variantFormik.errors.weight
                 }
+                inputProps={{ step: 'any' }}
               />
             </Box>
             <TextField

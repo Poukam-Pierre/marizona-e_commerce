@@ -143,6 +143,22 @@ export class ProductsService {
         },
         variants: {
           where: { isActive: true },
+          select: {
+            sku: true,
+            name: true,
+            price: true,
+            comparePrice: true,
+            inventoryQuantity: true,
+            isActive: true,
+            weight: true,
+            option1Name: true,
+            option1Value: true,
+            option2Name: true,
+            option2Value: true,
+            option3Name: true,
+            option3Value: true,
+            image: true,
+          },
         },
       },
     });
@@ -330,12 +346,31 @@ export class ProductsService {
         );
       }
     }
+    // Destructure to separate unproper type fields for update logic
+    const { categoryId, images, variants, ...rest } = dto;
 
-    // Update product
     const product = await this.prisma.product.update({
       where: { id },
       data: {
-        // ...dto,
+        ...rest,
+        ...(images
+          ? {
+              image:
+                images.find((img) => img.isPrimary)?.url ||
+                existingProduct.image,
+              images: {
+                deleteMany: {},
+                create: images.map((img, index) => ({
+                  url: img.url,
+                  alt: img.alt || existingProduct.name,
+                  order: img.order ?? index,
+                  isPrimary: img.isPrimary ?? index === 0,
+                })),
+              },
+            }
+          : {}),
+        ...(variants ? { variants: { deleteMany: {}, create: variants } } : {}),
+        ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
         updatedAt: new Date(),
       },
       include: {
