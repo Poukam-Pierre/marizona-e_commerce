@@ -17,6 +17,10 @@ import type {
   LowStockProduct,
   RecentOrder,
   HealthCheckResponse,
+  SettingsGroup,
+  Setting,
+  CreateSettingDto,
+  BulkUpdateSettingsDto,
 } from '@/types';
 
 const API_URL = '/api/v1';
@@ -329,6 +333,44 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ title, body }),
     });
+  }
+
+  // Settings
+  async getSettings(): Promise<SettingsGroup> {
+    return this.fetch<SettingsGroup>('/settings');
+  }
+
+  async getSettingsByCategory(category: string): Promise<Record<string, any>> {
+    return this.fetch<Record<string, any>>(`/settings/category/${category}`);
+  }
+
+  async getSetting(key: string): Promise<Setting> {
+    return this.fetch<Setting>(`/settings/${key}`);
+  }
+
+  async upsertSetting(data: CreateSettingDto): Promise<Setting> {
+    return this.fetch<Setting>('/settings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async bulkUpdateSettings(data: BulkUpdateSettingsDto): Promise<Setting[]> {
+    return this.fetch<Setting[]>('/settings/bulk', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateSetting(key: string, value: any): Promise<Setting> {
+    return this.fetch<Setting>(`/settings/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value }),
+    });
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    return this.fetch<void>(`/settings/${key}`, { method: 'DELETE' });
   }
 }
 

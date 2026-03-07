@@ -305,3 +305,33 @@ export interface HealthCheckResponse {
     };
   };
 }
+
+// Settings Types
+export interface Setting {
+  id: string;
+  key: string;
+  value: any;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SettingsGroup {
+  [category: string]: {
+    [key: string]: any;
+  };
+}
+
+export interface CreateSettingDto {
+  key: string;
+  value: any;
+  category?: string;
+}
+
+export interface UpdateSettingDto {
+  value: any;
+}
+
+export interface BulkUpdateSettingsDto {
+  settings: CreateSettingDto[];
+}

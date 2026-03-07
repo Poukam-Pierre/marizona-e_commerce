@@ -145,8 +145,10 @@ export default function OrdersPage() {
       });
       enqueueSnackbar('Order status updated', { variant: 'success' });
       setStatusDialogOpen(false);
-    } catch (error: any) {
-      enqueueSnackbar(error.message || 'Failed to update status', {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      enqueueSnackbar(message, {
         variant: 'error',
       });
     }

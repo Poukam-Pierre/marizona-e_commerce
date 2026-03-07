@@ -26,6 +26,7 @@ import {
 import { Sidebar } from './sidebar';
 import { useThemeToggle } from '@/providers/app-providers';
 import { useAuthStore } from '@/stores/auth-store';
+import { useRouter } from 'next/navigation';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -34,11 +35,14 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { darkMode, toggleTheme } = useThemeToggle();
   const { user, logout } = useAuthStore();
+  const { push } = useRouter();
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setUserMenuAnchor(event.currentTarget);
@@ -55,7 +59,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+      }}
+    >
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -155,7 +165,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                 </Typography>
               </Box>
               <MenuItem onClick={handleUserMenuClose}>Profile</MenuItem>
-              <MenuItem onClick={handleUserMenuClose}>Settings</MenuItem>
+              <MenuItem onClick={() => push('/settings')}>Settings</MenuItem>
               <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                 Logout
               </MenuItem>
