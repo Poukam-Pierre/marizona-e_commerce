@@ -151,9 +151,9 @@ export default function ProductsPage() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-CM', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'XAF',
     }).format(value);
   };
 
