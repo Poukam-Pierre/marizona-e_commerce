@@ -200,6 +200,7 @@ export class CategoriesService {
       where: { id },
       data: {
         ...dto,
+        ...(dto.parentId && { parentId: dto.parentId }),
         updatedAt: new Date(),
       },
       include: {
@@ -255,7 +256,7 @@ export class CategoriesService {
         return true;
       }
 
-      const parent = await this.prisma.category.findUnique({
+      const parent: any = await this.prisma.category.findUnique({
         where: { id: currentParentId, deletedAt: null },
         select: { parentId: true },
       });

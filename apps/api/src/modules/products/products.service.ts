@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { RedisService } from '../../common/services/redis.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { PushNotificationService } from '../notifications/push-notification.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto } from './dto/query-product.dto';
@@ -21,6 +23,8 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private redisService: RedisService,
+    private notificationsGateway: NotificationsGateway,
+    private pushNotificationService: PushNotificationService,
   ) {}
 
   async findAll(query: QueryProductDto): Promise<PaginatedResult<any>> {
@@ -308,6 +312,33 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product created: ${product.sku}`);
+
+    // Emit real-time notification for new product
+    this.notificationsGateway.emitProductCreated({
+      type: 'product.created',
+      product: {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        image: product.image || undefined,
+        categoryId: product.categoryId || undefined,
+        categoryName: product.category?.name,
+      },
+      timestamp: new Date(),
+    });
+
+    // Send push notification to all subscribed users (background/PWA)
+    try {
+      await this.pushNotificationService.notifyProductCreated(product);
+    } catch (error) {
+      // Log error but don't fail the product creation
+      this.logger.error(
+        `Failed to send push notification for product ${product.sku}:`,
+        error,
+      );
+    }
+
     return product;
   }
 
@@ -384,6 +415,22 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product updated: ${product.sku}`);
+
+    // // Emit real-time notification for product update
+    // this.notificationsGateway.emitProductUpdated({
+    //   type: 'product.updated',
+    //   product: {
+    //     id: product.id,
+    //     name: product.name,
+    //     slug: product.slug,
+    //     price: product.price,
+    //     image: product.image,
+    //     categoryId: product.categoryId,
+    //     categoryName: product.category?.name,
+    //   },
+    //   timestamp: new Date(),
+    // });
+
     return product;
   }
 
@@ -407,6 +454,21 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product deleted: ${existingProduct.sku}`);
+
+    // // Emit real-time notification for product deletion
+    // this.notificationsGateway.emitProductDeleted({
+    //   type: 'product.deleted',
+    //   product: {
+    //     id: existingProduct.id,
+    //     name: existingProduct.name,
+    //     slug: existingProduct.slug,
+    //     price: existingProduct.price,
+    //     image: existingProduct.image,
+    //     categoryId: existingProduct.categoryId,
+    //   },
+    //   timestamp: new Date(),
+    // });
+
     return { message: 'Product deleted successfully' };
   }
 
