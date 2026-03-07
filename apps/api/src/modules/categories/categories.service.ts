@@ -107,7 +107,9 @@ export class CategoriesService {
     });
 
     if (existingSlug && !existingSlug.deletedAt) {
-      throw new ConflictException(`Category with slug ${dto.slug} already exists`);
+      throw new ConflictException(
+        `Category with slug ${dto.slug} already exists`,
+      );
     }
 
     // Check if parent exists
@@ -117,7 +119,9 @@ export class CategoriesService {
       });
 
       if (!parent) {
-        throw new NotFoundException(`Parent category with ID ${dto.parentId} not found`);
+        throw new NotFoundException(
+          `Parent category with ID ${dto.parentId} not found`,
+        );
       }
     }
 
@@ -127,7 +131,7 @@ export class CategoriesService {
         slug: dto.slug,
         description: dto.description,
         image: dto.image,
-        parentId: dto.parentId,
+        ...(dto.parentId && { parentId: dto.parentId }),
         order: dto.order || 0,
         isActive: dto.isActive ?? true,
         metaTitle: dto.metaTitle,
@@ -161,7 +165,9 @@ export class CategoriesService {
       });
 
       if (existingSlug && !existingSlug.deletedAt) {
-        throw new ConflictException(`Category with slug ${dto.slug} already exists`);
+        throw new ConflictException(
+          `Category with slug ${dto.slug} already exists`,
+        );
       }
     }
 
@@ -176,13 +182,17 @@ export class CategoriesService {
       });
 
       if (!parent) {
-        throw new NotFoundException(`Parent category with ID ${dto.parentId} not found`);
+        throw new NotFoundException(
+          `Parent category with ID ${dto.parentId} not found`,
+        );
       }
 
       // Check for circular reference
       const isCircular = await this.checkCircularReference(id, dto.parentId);
       if (isCircular) {
-        throw new BadRequestException('Circular reference detected in category hierarchy');
+        throw new BadRequestException(
+          'Circular reference detected in category hierarchy',
+        );
       }
     }
 
@@ -219,7 +229,9 @@ export class CategoriesService {
 
     // Check if category has children
     if (existingCategory.children.length > 0) {
-      throw new BadRequestException('Cannot delete category with children. Remove children first.');
+      throw new BadRequestException(
+        'Cannot delete category with children. Remove children first.',
+      );
     }
 
     // Soft delete
@@ -232,7 +244,10 @@ export class CategoriesService {
     return { message: 'Category deleted successfully' };
   }
 
-  private async checkCircularReference(categoryId: string, newParentId: string): Promise<boolean> {
+  private async checkCircularReference(
+    categoryId: string,
+    newParentId: string,
+  ): Promise<boolean> {
     let currentParentId: string | null = newParentId;
 
     while (currentParentId) {

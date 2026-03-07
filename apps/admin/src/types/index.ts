@@ -29,10 +29,10 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
-  imageUrl: string | null;
+  image: string | null;
   parentId: string | null;
   isActive: boolean;
-  sortOrder: number;
+  order: number;
   createdAt: string;
   updatedAt: string;
   parent?: Category;
@@ -47,10 +47,10 @@ export interface CreateCategoryDto {
   name: string;
   slug?: string;
   description?: string;
-  imageUrl?: string;
+  image?: string;
   parentId?: string;
   isActive?: boolean;
-  sortOrder?: number;
+  order?: number;
 }
 
 export type UpdateCategoryDto = Partial<CreateCategoryDto>;
