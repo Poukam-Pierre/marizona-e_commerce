@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
 export interface ApiResponse<T> {
   success: true;

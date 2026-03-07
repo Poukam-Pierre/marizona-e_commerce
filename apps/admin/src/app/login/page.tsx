@@ -13,7 +13,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Divider,
 } from '@mui/material';
 import {
   Email as EmailIcon,
