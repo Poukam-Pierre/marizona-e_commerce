@@ -179,7 +179,7 @@ export interface CreateOrderDto {
   shippingAddress: string;
   shippingCity: string;
   shippingProvince: string;
-  shippingPostalCode: string;
+  shippingPostalCode?: string;
   shippingCountry?: string;
   items: Array<{
     productId: string;

@@ -35,7 +35,7 @@ export class CreateOrderDto {
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  customerName: string;
+  customerName!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -46,7 +46,7 @@ export class CreateOrderDto {
   @IsString()
   @MinLength(1)
   @MaxLength(50)
-  customerPhone: string;
+  customerPhone!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -59,37 +59,37 @@ export class CreateOrderDto {
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  shippingName: string;
+  shippingName!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(50)
-  shippingPhone: string;
+  shippingPhone!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(500)
-  shippingAddress: string;
+  shippingAddress!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  shippingCity: string;
+  shippingCity!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  shippingProvince: string;
+  shippingProvince!: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @MinLength(1)
   @MaxLength(20)
-  shippingPostalCode: string;
+  shippingPostalCode?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
