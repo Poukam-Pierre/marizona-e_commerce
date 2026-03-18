@@ -161,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         productId: product.id,
         productName: product.name,
         productSku: product.sku,
-        productImage: product.images[0]?.url || product.image,
+        productImage: variant?.image || product.image || product.images[0]?.url,
         productType: product.type,
         price,
         quantity,

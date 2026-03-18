@@ -23,7 +23,7 @@ export default function CartPage() {
   const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
 
   const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString('id-ID')}`;
+    return `FCFA ${price.toLocaleString('id-ID')}`;
   };
 
   if (items.length === 0) {

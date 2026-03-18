@@ -148,6 +148,7 @@ export class ProductsService {
         variants: {
           where: { isActive: true },
           select: {
+            id: true,
             sku: true,
             name: true,
             price: true,
