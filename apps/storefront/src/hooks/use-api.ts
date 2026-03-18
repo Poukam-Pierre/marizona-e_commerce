@@ -83,3 +83,15 @@ export function useWhatsAppLink(orderId: string) {
     enabled: !!orderId,
   });
 }
+
+// Rating
+export function useRateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, rating }: { id: string; rating: number }) =>
+      api.rateProduct(id, rating),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.product(id) });
+    },
+  });
+}

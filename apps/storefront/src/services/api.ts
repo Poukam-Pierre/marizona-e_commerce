@@ -104,4 +104,12 @@ export const api = {
       API_ENDPOINTS.whatsappLink(orderId),
     );
   },
+
+  // Ratings
+  async rateProduct(id: string, rating: number) {
+    return apiFetch<{ rating: number; reviewCount: number }>(
+      `${API_ENDPOINTS.products}/${id}/rate`,
+      { method: 'POST', body: JSON.stringify({ rating }) },
+    );
+  },
 };

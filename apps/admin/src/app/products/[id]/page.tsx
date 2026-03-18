@@ -83,7 +83,7 @@ const validationSchema = Yup.object({
         price: Yup.number().min(10, 'Price must be greater than 10').optional(),
         comparePrice: Yup.number()
           .min(10, 'Compare Price must be greater than 10')
-          .optional(),
+          .nullable(),
         inventoryQuantity: Yup.number().min(0).optional(),
         weight: Yup.number().nullable(),
         image: Yup.string().url().optional(),
