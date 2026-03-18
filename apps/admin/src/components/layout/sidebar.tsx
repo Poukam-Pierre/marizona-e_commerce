@@ -84,7 +84,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </Typography>
           </Box>
           <Typography variant="h6" fontWeight={700}>
-            ShopNx
+            ShopPk
           </Typography>
         </Box>
         {isMobile && (

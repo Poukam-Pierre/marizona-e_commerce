@@ -3,7 +3,7 @@ import { AppProviders } from '../providers/app-providers';
 import { AuthGuard } from '../components/layout/auth-guard';
 
 export const metadata = {
-  title: 'ShopNx Admin',
+  title: 'ShopPk Admin',
   description: 'E-commerce Admin Dashboard',
 };
 

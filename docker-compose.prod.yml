@@ -1,5 +1,5 @@
 # ============================================================================
-# ShopNx - Docker Compose for Production
+# ShopPk - Docker Compose for Production
 # ============================================================================
 
 services:
@@ -8,7 +8,7 @@ services:
   # ---------------------------------------------------------------------------
   nginx:
     image: nginx:alpine
-    container_name: shopnx-nginx
+    container_name: shoppk-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -21,7 +21,7 @@ services:
       - admin
       - api
     networks:
-      - shopnx-network
+      - shoppk-network
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -33,12 +33,12 @@ services:
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: shopnx-postgres
+    container_name: shoppk-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-shopnx}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-shopnx_secret}
-      POSTGRES_DB: ${DB_NAME:-shopnx}
+      POSTGRES_USER: ${DB_USER:-shoppk}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-shoppk_secret}
+      POSTGRES_DB: ${DB_NAME:-shoppk}
       # Performance tuning
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     command:
@@ -73,19 +73,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shopnx} -d ${DB_NAME:-shopnx}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shoppk} -d ${DB_NAME:-shoppk}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - shopnx-network
+      - shoppk-network
 
   # ---------------------------------------------------------------------------
   # Redis Cache
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: shopnx-redis
+    container_name: shoppk-redis
     restart: unless-stopped
     command: >
       redis-server
@@ -103,7 +103,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - shopnx-network
+      - shoppk-network
 
   # ---------------------------------------------------------------------------
   # API Service (NestJS)
@@ -113,13 +113,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.api
       target: production
-    image: ghcr.io/shopnx/shopnx/api:${IMAGE_TAG:-latest}
-    container_name: shopnx-api
+    image: ghcr.io/shoppk/shoppk/api:${IMAGE_TAG:-latest}
+    container_name: shoppk-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3002
-      DATABASE_URL: postgresql://${DB_USER:-shopnx}:${DB_PASSWORD:-shopnx_secret}@postgres:5432/${DB_NAME:-shopnx}?schema=public
+      DATABASE_URL: postgresql://${DB_USER:-shoppk}:${DB_PASSWORD:-shoppk_secret}@postgres:5432/${DB_NAME:-shoppk}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
@@ -127,7 +127,7 @@ services:
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@shopnx.com}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@shoppk.com}
     ports:
       - "${API_PORT:-3002}:3002"
     depends_on:
@@ -142,7 +142,7 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - shopnx-network
+      - shoppk-network
     deploy:
       resources:
         limits:
@@ -160,8 +160,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile.storefront
       target: production
-    image: ghcr.io/shopnx/shopnx/storefront:${IMAGE_TAG:-latest}
-    container_name: shopnx-storefront
+    image: ghcr.io/shoppk/shoppk/storefront:${IMAGE_TAG:-latest}
+    container_name: shoppk-storefront
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -180,7 +180,7 @@ services:
       retries: 3
       start_period: 20s
     networks:
-      - shopnx-network
+      - shoppk-network
     deploy:
       resources:
         limits:
@@ -198,8 +198,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile.admin
       target: production
-    image: ghcr.io/shopnx/shopnx/admin:${IMAGE_TAG:-latest}
-    container_name: shopnx-admin
+    image: ghcr.io/shoppk/shoppk/admin:${IMAGE_TAG:-latest}
+    container_name: shoppk-admin
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -218,7 +218,7 @@ services:
       retries: 3
       start_period: 20s
     networks:
-      - shopnx-network
+      - shoppk-network
     deploy:
       resources:
         limits:
@@ -232,7 +232,7 @@ services:
 # Networks
 # -----------------------------------------------------------------------------
 networks:
-  shopnx-network:
+  shoppk-network:
     driver: bridge
 
 # -----------------------------------------------------------------------------

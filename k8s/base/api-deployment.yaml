@@ -6,23 +6,23 @@ kind: Deployment
 metadata:
   name: api
   labels:
-    app: shopnx
+    app: shoppk
     component: api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: shopnx
+      app: shoppk
       component: api
   template:
     metadata:
       labels:
-        app: shopnx
+        app: shoppk
         component: api
     spec:
       containers:
         - name: api
-          image: ghcr.io/shopnx/shopnx/api:latest
+          image: ghcr.io/shoppk/shoppk/api:latest
           ports:
             - containerPort: 3002
               name: http
@@ -34,22 +34,22 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: shopnx-secrets
+                  name: shoppk-secrets
                   key: database-url
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: shopnx-secrets
+                  name: shoppk-secrets
                   key: redis-url
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: shopnx-secrets
+                  name: shoppk-secrets
                   key: jwt-secret
             - name: JWT_REFRESH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: shopnx-secrets
+                  name: shoppk-secrets
                   key: jwt-refresh-secret
           resources:
             requests:
@@ -76,7 +76,7 @@ kind: Service
 metadata:
   name: api
   labels:
-    app: shopnx
+    app: shoppk
     component: api
 spec:
   type: ClusterIP
@@ -85,7 +85,7 @@ spec:
       targetPort: 3002
       name: http
   selector:
-    app: shopnx
+    app: shoppk
     component: api
 ---
 apiVersion: autoscaling/v2

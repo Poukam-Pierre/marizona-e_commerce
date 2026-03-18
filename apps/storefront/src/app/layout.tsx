@@ -7,13 +7,13 @@ import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'ShopNx - E-Commerce Store',
+  title: 'ShopPk - E-Commerce Store',
   description: 'Your one-stop shop for quality products. Browse, buy, and checkout with WhatsApp.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'ShopNx',
+    title: 'ShopPk',
   },
   formatDetection: {
     telephone: false,

@@ -12,7 +12,7 @@ export function Footer() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
                 <Package className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">ShopNx</span>
+              <span className="text-2xl font-bold text-white">ShopPk</span>
             </Link>
             <p className="text-slate-400 max-w-md">
               Your one-stop shop for quality products. Browse our wide selection
@@ -30,12 +30,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="hover:text-white transition-colors">
+                <Link
+                  href="/products"
+                  className="hover:text-white transition-colors"
+                >
                   Products
                 </Link>
               </li>
               <li>
-                <Link href="/cart" className="hover:text-white transition-colors">
+                <Link
+                  href="/cart"
+                  className="hover:text-white transition-colors"
+                >
                   Cart
                 </Link>
               </li>
@@ -63,7 +69,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-500">
-          <p>© {new Date().getFullYear()} ShopNx. By Poukam Tech</p>
+          <p>© {new Date().getFullYear()} ShopPk. By Poukam Tech</p>
         </div>
       </div>
     </footer>

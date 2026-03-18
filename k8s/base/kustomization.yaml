@@ -12,5 +12,5 @@ resources:
   - ingress.yaml
 
 commonLabels:
-  app.kubernetes.io/name: shopnx
-  app.kubernetes.io/part-of: shopnx-platform
+  app.kubernetes.io/name: shoppk
+  app.kubernetes.io/part-of: shoppk-platform

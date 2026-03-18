@@ -99,7 +99,7 @@ export default function LoginPage() {
               <InventoryIcon sx={{ fontSize: 32, color: 'white' }} />
             </Box>
             <Typography variant="h5" fontWeight={700}>
-              ShopNx Admin
+              ShopPk Admin
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Sign in to manage your store

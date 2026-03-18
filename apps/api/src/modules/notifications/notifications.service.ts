@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
@@ -7,7 +12,9 @@ export class NotificationsService {
 
   constructor(private prisma: PrismaService) {}
 
-  async generateWhatsAppCheckoutLink(orderId: string): Promise<{ url: string; message: string }> {
+  async generateWhatsAppCheckoutLink(
+    orderId: string,
+  ): Promise<{ url: string; message: string }> {
     // Get order details
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -15,7 +22,13 @@ export class NotificationsService {
         items: {
           include: {
             product: {
-              select: { id: true, name: true, sku: true, ownerName: true, ownerWhatsapp: true },
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                ownerName: true,
+                ownerWhatsapp: true,
+              },
             },
           },
         },
@@ -28,10 +41,15 @@ export class NotificationsService {
 
     // Get WhatsApp number - prefer product owner's WhatsApp for direct contact
     const firstProduct = order.items[0]?.product;
-    const phoneNumber = firstProduct?.ownerWhatsapp || order.customerWhatsapp || order.customerPhone;
+    const phoneNumber =
+      firstProduct?.ownerWhatsapp ||
+      order.customerWhatsapp ||
+      order.customerPhone;
 
     if (!phoneNumber) {
-      throw new BadRequestException('No WhatsApp number available for this order');
+      throw new BadRequestException(
+        'No WhatsApp number available for this order',
+      );
     }
 
     // Format phone number (remove non-digits)
@@ -82,7 +100,9 @@ Please confirm my order. Thank you! 🙏`;
     return { url, message };
   }
 
-  async generateOrderConfirmationMessage(orderId: string): Promise<{ message: string }> {
+  async generateOrderConfirmationMessage(
+    orderId: string,
+  ): Promise<{ message: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -118,7 +138,9 @@ Thank you for your purchase! 🙏`;
     return { message };
   }
 
-  async generateShippingNotification(orderId: string): Promise<{ message: string }> {
+  async generateShippingNotification(
+    orderId: string,
+  ): Promise<{ message: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {

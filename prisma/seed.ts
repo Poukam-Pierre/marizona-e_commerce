@@ -123,7 +123,7 @@ async function main() {
     // general settings
     {
       key: 'storeName',
-      value: JSON.stringify('ShopNx E-Commerce'),
+      value: JSON.stringify('ShopPk E-Commerce'),
       category: 'general',
     },
     {

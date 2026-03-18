@@ -6,23 +6,23 @@ kind: Deployment
 metadata:
   name: admin
   labels:
-    app: shopnx
+    app: shoppk
     component: admin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: shopnx
+      app: shoppk
       component: admin
   template:
     metadata:
       labels:
-        app: shopnx
+        app: shoppk
         component: admin
     spec:
       containers:
         - name: admin
-          image: ghcr.io/shopnx/shopnx/admin:latest
+          image: ghcr.io/shoppk/shoppk/admin:latest
           ports:
             - containerPort: 3001
               name: http
@@ -34,7 +34,7 @@ spec:
             - name: NEXT_PUBLIC_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: shopnx-config
+                  name: shoppk-config
                   key: admin-api-url
           resources:
             requests:
@@ -61,7 +61,7 @@ kind: Service
 metadata:
   name: admin
   labels:
-    app: shopnx
+    app: shoppk
     component: admin
 spec:
   type: ClusterIP
@@ -70,7 +70,7 @@ spec:
       targetPort: 3001
       name: http
   selector:
-    app: shopnx
+    app: shoppk
     component: admin
 ---
 apiVersion: autoscaling/v2

@@ -22,7 +22,7 @@ type CartAction =
   | { type: 'CLEAR_CART' }
   | { type: 'LOAD_CART'; payload: CartItem[] };
 
-const CART_STORAGE_KEY = 'shopnx_cart';
+const CART_STORAGE_KEY = 'shoppk_cart';
 
 function calculateTotals(items: CartItem[]): { totalItems: number; totalPrice: number } {
   return items.reduce(

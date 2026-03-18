@@ -6,23 +6,23 @@ kind: Deployment
 metadata:
   name: storefront
   labels:
-    app: shopnx
+    app: shoppk
     component: storefront
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: shopnx
+      app: shoppk
       component: storefront
   template:
     metadata:
       labels:
-        app: shopnx
+        app: shoppk
         component: storefront
     spec:
       containers:
         - name: storefront
-          image: ghcr.io/shopnx/shopnx/storefront:latest
+          image: ghcr.io/shoppk/shoppk/storefront:latest
           ports:
             - containerPort: 3000
               name: http
@@ -34,7 +34,7 @@ spec:
             - name: NEXT_PUBLIC_API_URL
               valueFrom:
                 configMapKeyRef:
-                  name: shopnx-config
+                  name: shoppk-config
                   key: api-url
           resources:
             requests:
@@ -61,7 +61,7 @@ kind: Service
 metadata:
   name: storefront
   labels:
-    app: shopnx
+    app: shoppk
     component: storefront
 spec:
   type: ClusterIP
@@ -70,7 +70,7 @@ spec:
       targetPort: 3000
       name: http
   selector:
-    app: shopnx
+    app: shoppk
     component: storefront
 ---
 apiVersion: autoscaling/v2

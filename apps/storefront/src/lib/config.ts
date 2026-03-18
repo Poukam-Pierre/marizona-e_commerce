@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
 
 // App Configuration
 export const APP_CONFIG = {
-  name: 'ShopNx',
+  name: 'ShopPk',
   description: 'Professional E-Commerce Store',
   currency: 'IDR',
   currencySymbol: 'Rp',
@@ -32,6 +32,6 @@ export const APP_CONFIG = {
 
 // Storage Keys
 export const STORAGE_KEYS = {
-  CART: 'shopnx_cart',
-  THEME: 'shopnx_theme',
+  CART: 'shoppk_cart',
+  THEME: 'shoppk_theme',
 } as const;

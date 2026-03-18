@@ -4,7 +4,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: shopnx-ingress
+  name: shoppk-ingress
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -15,18 +15,18 @@ metadata:
 spec:
   tls:
     - hosts:
-        - shopnx.com
-        - www.shopnx.com
-      secretName: shopnx-tls
+        - shoppk.com
+        - www.shoppk.com
+      secretName: shoppk-tls
     - hosts:
-        - admin.shopnx.com
+        - admin.shoppk.com
       secretName: admin-tls
     - hosts:
-        - api.shopnx.com
+        - api.shoppk.com
       secretName: api-tls
   rules:
     # Storefront
-    - host: shopnx.com
+    - host: shoppk.com
       http:
         paths:
           - path: /
@@ -36,7 +36,7 @@ spec:
                 name: storefront
                 port:
                   number: 3000
-    - host: www.shopnx.com
+    - host: www.shoppk.com
       http:
         paths:
           - path: /
@@ -47,7 +47,7 @@ spec:
                 port:
                   number: 3000
     # Admin
-    - host: admin.shopnx.com
+    - host: admin.shoppk.com
       http:
         paths:
           - path: /
@@ -58,7 +58,7 @@ spec:
                 port:
                   number: 3001
     # API
-    - host: api.shopnx.com
+    - host: api.shoppk.com
       http:
         paths:
           - path: /
