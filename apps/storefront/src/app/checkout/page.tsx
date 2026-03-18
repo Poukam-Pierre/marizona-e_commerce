@@ -66,6 +66,9 @@ export default function CheckoutPage() {
     return `FCFA ${price.toLocaleString('id-ID')}`;
   };
 
+  const shippingCost = Math.min(1000, Math.round(totalPrice * 0));
+  const orderTotal = totalPrice + shippingCost;
+
   const formik = useFormik<CheckoutFormValues>({
     initialValues,
     validationSchema,
@@ -87,6 +90,7 @@ export default function CheckoutPage() {
           shippingCity: values.shippingCity,
           shippingProvince: values.shippingProvince,
           shippingPostalCode: values.shippingPostalCode,
+          shippingCost: shippingCost > 0 ? shippingCost : undefined,
           items: items.map((item) => ({
             productId: item.productId,
             variantId: item.variantId,
@@ -166,7 +170,9 @@ export default function CheckoutPage() {
 📦 *Order Items:*
 ${lineItems}
 
-💰 *Total:* ${formatPrice(totalPrice)}
+💰 *Subtotal:* ${formatPrice(totalPrice)}
+🚚 *Shipping:* ${formatPrice(shippingCost)}
+💰 *Total:* ${formatPrice(orderTotal)}
 
 👤 *Name:* ${values.customerName}
 📱 *Phone:* ${values.customerPhone}
@@ -276,7 +282,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="customerName"
                         name="customerName"
-                        placeholder="John Doe"
+                        placeholder="Name of the person purchasing the order"
                         value={formik.values.customerName}
                         onChange={handleBillingChange}
                         onBlur={formik.handleBlur}
@@ -292,7 +298,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="customerPhone"
                         name="customerPhone"
-                        placeholder="+62 812 3456 7890"
+                        placeholder="+237 696 841 451"
                         value={formik.values.customerPhone}
                         onChange={handleBillingChange}
                         onBlur={formik.handleBlur}
@@ -311,7 +317,7 @@ Please confirm my order. Thank you! 🙏`;
                         id="customerEmail"
                         name="customerEmail"
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="poukamtech@example.com"
                         value={formik.values.customerEmail}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -327,7 +333,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="customerWhatsapp"
                         name="customerWhatsapp"
-                        placeholder="+62 812 3456 7890"
+                        placeholder="+237 696 841 451"
                         value={formik.values.customerWhatsapp}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -367,7 +373,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="shippingName"
                         name="shippingName"
-                        placeholder="John Doe"
+                        placeholder="Name of the person receiving the order"
                         value={
                           formik.values.shippingName ||
                           formik.values.customerName
@@ -382,7 +388,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="shippingPhone"
                         name="shippingPhone"
-                        placeholder="+62 812 3456 7890"
+                        placeholder="+237 696 841 451"
                         value={
                           formik.values.shippingPhone ||
                           formik.values.customerPhone
@@ -398,7 +404,7 @@ Please confirm my order. Thank you! 🙏`;
                     <Textarea
                       id="shippingAddress"
                       name="shippingAddress"
-                      placeholder="Jl. Sudirman No. 123, RT 01/RW 02"
+                      placeholder="Pk10, entree ruccotel, Douala Bassa"
                       value={formik.values.shippingAddress}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
@@ -415,7 +421,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="shippingCity"
                         name="shippingCity"
-                        placeholder="Jakarta"
+                        placeholder="Douala"
                         value={formik.values.shippingCity}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -431,7 +437,7 @@ Please confirm my order. Thank you! 🙏`;
                       <Input
                         id="shippingProvince"
                         name="shippingProvince"
-                        placeholder="DKI Jakarta"
+                        placeholder="Littoral"
                         value={formik.values.shippingProvince}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -516,7 +522,9 @@ Please confirm my order. Thank you! 🙏`;
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-muted-foreground text-sm">TBD</span>
+                    <span>
+                      {shippingCost > 0 ? formatPrice(shippingCost) : 'TBD'}
+                    </span>
                   </div>
 
                   <Separator />
@@ -524,7 +532,7 @@ Please confirm my order. Thank you! 🙏`;
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
                     <span className="text-primary">
-                      {formatPrice(totalPrice)}
+                      {formatPrice(orderTotal)}
                     </span>
                   </div>
                 </CardContent>

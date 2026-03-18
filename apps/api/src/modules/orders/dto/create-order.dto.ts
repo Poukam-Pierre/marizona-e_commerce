@@ -121,4 +121,9 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(50)
   couponCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  shippingCost?: number;
 }

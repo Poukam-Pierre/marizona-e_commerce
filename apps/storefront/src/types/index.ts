@@ -187,6 +187,7 @@ export interface CreateOrderDto {
     quantity: number;
   }>;
   customerNotes?: string;
+  shippingCost?: number;
 }
 
 // Cart Types
