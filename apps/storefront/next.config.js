@@ -21,6 +21,11 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Allow any HTTPS host so product images from arbitrary merchant sources load correctly.
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
     // Optimize images
     formats: ['image/avif', 'image/webp'],
