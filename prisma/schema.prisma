@@ -77,28 +77,28 @@ enum PaymentMethod {
 // ============================================================================
 
 model AdminUser {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      AdminRole @default(VIEWER)
-  avatar    String?
-  
+  id       String    @id @default(cuid())
+  email    String    @unique
+  password String
+  name     String
+  role     AdminRole @default(VIEWER)
+  avatar   String?
+
   emailVerified     DateTime?
   lastLoginAt       DateTime?
   passwordChangedAt DateTime?
-  
-  isActive    Boolean @default(true)
-  isLocked    Boolean @default(false)
+
+  isActive    Boolean   @default(true)
+  isLocked    Boolean   @default(false)
   lockedUntil DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  
+
   auditLogs AdminAuditLog[]
   sessions  AdminSession[]
-  
+
   @@index([email])
   @@index([role])
   @@map("admin_users")
@@ -112,9 +112,9 @@ model AdminSession {
   userAgent   String?
   expiresAt   DateTime
   createdAt   DateTime @default(now())
-  
+
   adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-  
+
   @@index([token])
   @@map("admin_sessions")
 }
@@ -130,9 +130,9 @@ model AdminAuditLog {
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
-  
+
   adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-  
+
   @@index([adminUserId])
   @@index([createdAt])
   @@map("admin_audit_logs")
@@ -148,23 +148,23 @@ model Category {
   slug        String  @unique
   description String?
   image       String?
-  
+
   parentId String?
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")
-  
+
   order    Int     @default(0)
   isActive Boolean @default(true)
-  
+
   metaTitle       String?
   metaDescription String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  
+
   products Product[]
-  
+
   @@index([slug])
   @@map("categories")
 }
@@ -175,56 +175,56 @@ model Product {
   name        String
   slug        String  @unique
   description String?
-  
+
   type ProductType @default(PHYSICAL)
-  
-  price        Float   // SQLite doesn't support Decimal
+
+  price        Float // SQLite doesn't support Decimal
   comparePrice Float?
   costPrice    Float?
-  
+
   inventoryQuantity Int     @default(0)
   inventoryTracked  Boolean @default(true)
   lowStockThreshold Int     @default(10)
-  
+
   weight Float?
   length Float?
   width  Float?
   height Float?
-  
+
   downloadUrl    String?
   downloadLimit  Int?
   downloadExpiry Int?
-  
+
   ownerName     String?
   ownerWhatsapp String?
-  
+
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
+
   image           String?
   metaTitle       String?
   metaDescription String?
-  
+
   isActive     Boolean @default(true)
   isFeatured   Boolean @default(false)
   isBestSeller Boolean @default(false)
-  
+
   viewCount   Int    @default(0)
   soldCount   Int    @default(0)
   rating      Float?
   reviewCount Int    @default(0)
-  
+
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-  
+
   images             ProductImage[]
   variants           ProductVariant[]
   inventoryMovements InventoryMovement[]
   orderItems         OrderItem[]
   cartItems          CartItem[]
-  
+
   @@index([slug])
   @@index([sku])
   @@index([type])
@@ -239,38 +239,38 @@ model ProductImage {
   alt       String?
   order     Int     @default(0)
   isPrimary Boolean @default(false)
-  
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+
   @@index([productId])
   @@map("product_images")
 }
 
 model ProductVariant {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   productId String
-  sku       String  @unique
+  sku       String @unique
   name      String
-  
+
   option1Name  String?
   option1Value String?
   option2Name  String?
   option2Value String?
   option3Name  String?
   option3Value String?
-  
+
   price        Float
   comparePrice Float?
-  
+
   inventoryQuantity Int @default(0)
-  
+
   weight Float?
   image  String?
-  
+
   isActive Boolean @default(true)
-  
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+
   @@index([productId])
   @@map("product_variants")
 }
@@ -279,22 +279,22 @@ model InventoryMovement {
   id        String  @id @default(cuid())
   productId String
   variantId String?
-  
+
   type      MovementType
   quantity  Int
   reason    String?
   reference String?
-  
+
   previousStock Int
   newStock      Int
-  
+
   notes  String?
   userId String?
-  
+
   createdAt DateTime @default(now())
-  
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+
   @@index([productId])
   @@index([createdAt])
   @@map("inventory_movements")
@@ -310,20 +310,20 @@ model Customer {
   phone  String? @unique
   name   String?
   avatar String?
-  
+
   whatsappNumber String?
   whatsappOptIn  Boolean @default(false)
-  
+
   password String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  
+
   orders    Order[]
   addresses CustomerAddress[]
   cartItems CartItem[]
-  
+
   @@index([email])
   @@index([phone])
   @@map("customers")
@@ -332,7 +332,7 @@ model Customer {
 model CustomerAddress {
   id         String @id @default(cuid())
   customerId String
-  
+
   label      String?
   name       String
   phone      String
@@ -340,12 +340,12 @@ model CustomerAddress {
   city       String
   province   String
   postalCode String
-  country    String @default("Indonesia")
-  
+  country    String  @default("Cameroon")
+
   isDefault Boolean @default(false)
-  
+
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
+
   @@index([customerId])
   @@map("customer_addresses")
 }
@@ -356,72 +356,72 @@ model CustomerAddress {
 
 model Order {
   id String @id @default(cuid())
-  
+
   orderNumber String @unique
-  
+
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  
+
   customerName     String
   customerEmail    String?
   customerPhone    String
   customerWhatsapp String?
-  
+
   shippingName       String
   shippingPhone      String
   shippingAddress    String
   shippingCity       String
   shippingProvince   String
-  shippingPostalCode String
-  shippingCountry    String @default("Indonesia")
-  
+  shippingPostalCode String?
+  shippingCountry    String  @default("Cameroon")
+
   billingName       String?
   billingPhone      String?
   billingAddress    String?
   billingCity       String?
   billingProvince   String?
   billingPostalCode String?
-  
+
   subtotal     Float
   discount     Float @default(0)
   shippingCost Float @default(0)
   tax          Float @default(0)
   total        Float
-  
+
   currency String @default("IDR")
-  
-  status       OrderStatus   @default(PENDING)
+
+  status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
-  
+
   paymentMethod PaymentMethod @default(WHATSAPP)
   paymentId     String?
   paidAt        DateTime?
-  
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  trackingNumber  String?
+
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
+  trackingNumber   String?
   shippingProvider String?
-  
-  digitalDownloadUrl   String?
+
+  digitalDownloadUrl    String?
   digitalDownloadExpiry DateTime?
-  
+
   customerNotes String?
   adminNotes    String?
-  
-  whatsappSentAt     DateTime?
+
+  whatsappSentAt      DateTime?
   whatsappConfirmedAt DateTime?
-  
+
   couponId   String?
   couponCode String?
-  
+
   confirmedAt DateTime?
   cancelledAt DateTime?
   refundedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   items OrderItem[]
-  
+
   @@index([orderNumber])
   @@index([customerId])
   @@index([status])
@@ -431,38 +431,38 @@ model Order {
 
 model OrderItem {
   id String @id @default(cuid())
-  
+
   orderId String
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productSku  String
-  productName String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productSku   String
+  productName  String
   productImage String?
-  
+
   variantId   String?
   variantName String?
-  
+
   unitPrice  Float
   totalPrice Float
-  
+
   quantity Int
-  
+
   downloadUrl    String?
-  downloadCount  Int @default(0)
+  downloadCount  Int       @default(0)
   downloadLimit  Int?
   downloadExpiry DateTime?
-  
+
   productType ProductType @default(PHYSICAL)
-  
-  isShipped   Boolean @default(false)
+
+  isShipped   Boolean   @default(false)
   shippedAt   DateTime?
-  isDelivered Boolean @default(false)
+  isDelivered Boolean   @default(false)
   deliveredAt DateTime?
-  
+
   createdAt DateTime @default(now())
-  
+
   @@index([orderId])
   @@map("order_items")
 }
@@ -473,24 +473,24 @@ model OrderItem {
 
 model CartItem {
   id String @id @default(cuid())
-  
+
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
+
   sessionId String?
-  
+
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+
   variantId String?
-  
+
   quantity Int
-  
+
   price Float
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([customerId])
   @@index([sessionId])
   @@map("cart_items")
@@ -501,29 +501,29 @@ model CartItem {
 // ============================================================================
 
 model Coupon {
-  id          String @id @default(cuid())
-  code        String @unique
+  id          String  @id @default(cuid())
+  code        String  @unique
   name        String
   description String?
-  
+
   type  String
   value Float
-  
+
   minOrderValue Float?
   maxDiscount   Float?
   usageLimit    Int?
-  usageCount    Int @default(0)
-  
+  usageCount    Int    @default(0)
+
   productIds  String // JSON array for SQLite
   categoryIds String
-  
+
   startsAt  DateTime?
   expiresAt DateTime?
-  isActive  Boolean @default(true)
-  
+  isActive  Boolean   @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([code])
   @@map("coupons")
 }
@@ -537,10 +537,10 @@ model Setting {
   key      String @unique
   value    String // JSON string for SQLite
   category String @default("general")
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([key])
   @@map("settings")
 }
@@ -550,16 +550,16 @@ model Setting {
 // ============================================================================
 
 model WebhookEvent {
-  id      String @id @default(cuid())
-  type    String
-  payload String // JSON string for SQLite
-  status  String @default("pending")
-  attempts Int   @default(0)
+  id        String    @id @default(cuid())
+  type      String
+  payload   String // JSON string for SQLite
+  status    String    @default("pending")
+  attempts  Int       @default(0)
   lastError String?
-  sentAt   DateTime?
-  
+  sentAt    DateTime?
+
   createdAt DateTime @default(now())
-  
+
   @@index([type])
   @@index([status])
   @@map("webhook_events")
@@ -570,18 +570,18 @@ model WebhookEvent {
 // ============================================================================
 
 model PushSubscription {
-  id        String   @id @default(cuid())
-  endpoint  String   @unique
-  p256dh    String   // Public key for encryption
-  auth      String   // Auth secret
-  
-  userId    String?  // Optional user association
-  userAgent String?  // Browser/device info
-  
+  id       String @id @default(cuid())
+  endpoint String @unique
+  p256dh   String // Public key for encryption
+  auth     String // Auth secret
+
+  userId    String? // Optional user association
+  userAgent String? // Browser/device info
+
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([endpoint])
   @@index([userId])
   @@map("push_subscriptions")
