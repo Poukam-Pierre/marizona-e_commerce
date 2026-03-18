@@ -198,6 +198,37 @@ export class ProductsService {
     return product;
   }
 
+  async rate(id: string, score: number) {
+    const product = await this.prisma.product.findUnique({
+      where: { id, deletedAt: null },
+      select: { id: true, rating: true, reviewCount: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    const currentCount = product.reviewCount;
+    const currentRating = product.rating ?? 0;
+    const newCount = currentCount + 1;
+    const newRating = (currentRating * currentCount + score) / newCount;
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: {
+        rating: Math.round(newRating * 10) / 10, // 1 decimal place
+        reviewCount: newCount,
+      },
+      select: { rating: true, reviewCount: true },
+    });
+
+    // Invalidate product cache
+    await this.redisService.del(`${CACHE_KEY_PREFIX}:${id}`);
+    await this.redisService.delPattern(`${CACHE_KEY_PREFIX}:list:*`);
+
+    return updated;
+  }
+
   async create(payload: CreateProductDto) {
     const {
       sku,
