@@ -23,12 +23,17 @@ export function usePushNotifications(
   const [error, setError] = useState<string | null>(null);
   const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
 
-  // Check if push notifications are supported
-  const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window;
+  // Start as false so server and client agree on the initial render,
+  // then set the real value client-side to avoid hydration mismatches.
+  const [isSupported, setIsSupported] = useState(false);
+
+  useEffect(() => {
+    setIsSupported(
+      'serviceWorker' in navigator &&
+        'PushManager' in window &&
+        'Notification' in window,
+    );
+  }, []);
 
   // Initialize permission state
   useEffect(() => {
