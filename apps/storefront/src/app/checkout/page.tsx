@@ -15,7 +15,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useCart } from '@/providers/cart-provider';
 import { useCreateOrder } from '@/hooks/use-api';
-import type { Order } from '@/types';
+import { apiFetch, API_ENDPOINTS } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,11 +113,10 @@ export default function CheckoutPage() {
           // non-critical – ignore storage errors
         }
 
-        // Generate WhatsApp URL
-        const phone =
-          items[0]?.ownerWhatsapp?.replace(/\D/g, '') || '696841451';
-        const message = generateWhatsAppMessage(order, values);
-        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        // Fetch WhatsApp URL from backend (includes properly formatted message)
+        const { url: waUrl } = await apiFetch<{ url: string }>(
+          `${API_ENDPOINTS.orders}/${order.id}/whatsapp`,
+        );
 
         setWhatsappUrl(waUrl);
         setOrderCreated(true);
@@ -150,40 +149,6 @@ export default function CheckoutPage() {
       formik.setFieldValue('shippingName', formik.values.customerName);
       formik.setFieldValue('shippingPhone', formik.values.customerPhone);
     }
-  };
-
-  const generateWhatsAppMessage = (
-    order: Order,
-    values: CheckoutFormValues,
-  ) => {
-    const lineItems = items
-      .map(
-        (item) =>
-          `- ${item.productName} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`,
-      )
-      .join('\n');
-
-    return `Hello, I would like to place an order:
-
-📄 *Order ID:* ${order.orderNumber}
-
-📦 *Order Items:*
-${lineItems}
-
-💰 *Subtotal:* ${formatPrice(totalPrice)}
-🚚 *Shipping:* ${formatPrice(shippingCost)}
-💰 *Total:* ${formatPrice(orderTotal)}
-
-👤 *Name:* ${values.customerName}
-📱 *Phone:* ${values.customerPhone}
-📍 *Shipping Address:*
-${values.shippingAddress}
-${values.shippingCity}, ${values.shippingProvince}
-${values.shippingPostalCode}
-
-${values.customerNotes ? `📝 *Notes:* ${values.customerNotes}` : ''}
-
-Please confirm my order. Thank you! 🙏`;
   };
 
   // Helper: field error shown only after the field has been touched

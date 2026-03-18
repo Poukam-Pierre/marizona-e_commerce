@@ -45,28 +45,28 @@ export class NotificationsService {
       })
       .join('\n');
 
-    const message = `Halo, saya ingin memesan:
+    const message = `Hello, I would like to place an order:
 
 📄 *Order ID:* ${order.orderNumber}
 
-📦 *Item Pesanan:*
+📦 *Order Items:*
 ${items}
 
-💰 *Subtotal:* Rp ${this.formatPrice(order.subtotal)}
-🚚 *Ongkir:* Rp ${this.formatPrice(order.shippingCost)}
-💸 *Total:* Rp ${this.formatPrice(order.total)}
+💰 *Subtotal:* FCFA ${this.formatPrice(order.subtotal)}
+🚚 *Shipping:* FCFA ${this.formatPrice(order.shippingCost)}
+💰 *Total:* FCFA ${this.formatPrice(order.total)}
 
-👤 *Nama:* ${order.shippingName}
-📱 *Telepon:* ${order.shippingPhone}
-📍 *Alamat:*
+👤 *Name:* ${order.shippingName}
+📱 *Phone:* ${order.shippingPhone}
+📍 *Shipping Address:*
 ${order.shippingAddress}
 ${order.shippingCity}, ${order.shippingProvince}
 ${order.shippingPostalCode}
 ${order.shippingCountry}
 
-${order.customerNotes ? `📝 *Catatan:* ${order.customerNotes}` : ''}
+${order.customerNotes ? `📝 *Notes:* ${order.customerNotes}` : ''}
 
-Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
+Please confirm my order. Thank you! 🙏`;
 
     const encodedMessage = encodeURIComponent(message);
     const url = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
@@ -104,16 +104,16 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
       .map((item) => `- ${item.productName} x${item.quantity}`)
       .join('\n');
 
-    const message = `✅ *Pesanan Dikonfirmasi!*
+    const message = `✅ *Order Confirmed!*
 
 📄 *Order ID:* ${order.orderNumber}
 
-📦 *Item:*
+📦 *Items:*
 ${items}
 
-💰 *Total:* Rp ${this.formatPrice(order.total)}
+💰 *Total:* FCFA ${this.formatPrice(order.total)}
 
-Terima kasih telah berbelanja! 🙏`;
+Thank you for your purchase! 🙏`;
 
     return { message };
   }
@@ -136,15 +136,15 @@ Terima kasih telah berbelanja! 🙏`;
       throw new BadRequestException('Order does not have tracking number yet');
     }
 
-    const message = `🚚 *Pesanan Dikirim!*
+    const message = `🚚 *Order Shipped!*
 
 📄 *Order ID:* ${order.orderNumber}
-📦 *Kurir:* ${order.shippingProvider || 'N/A'}
-🔖 *No. Resi:* ${order.trackingNumber}
+📦 *Carrier:* ${order.shippingProvider || 'N/A'}
+🔖 *Tracking Number:* ${order.trackingNumber}
 
-Lacak pengiriman Anda untuk melihat status terbaru.
+Track your shipment for the latest status.
 
-Terima kasih! 🙏`;
+Thank you! 🙏`;
 
     return { message };
   }
