@@ -247,7 +247,7 @@ export default function CheckoutPage() {
                       <Input
                         id="customerName"
                         name="customerName"
-                        placeholder="Name of the person purchasing the order"
+                        placeholder="Your name..."
                         value={formik.values.customerName}
                         onChange={handleBillingChange}
                         onBlur={formik.handleBlur}
@@ -263,7 +263,7 @@ export default function CheckoutPage() {
                       <Input
                         id="customerPhone"
                         name="customerPhone"
-                        placeholder="+237 696 841 451"
+                        placeholder="+237 696..."
                         value={formik.values.customerPhone}
                         onChange={handleBillingChange}
                         onBlur={formik.handleBlur}
@@ -282,7 +282,7 @@ export default function CheckoutPage() {
                         id="customerEmail"
                         name="customerEmail"
                         type="email"
-                        placeholder="poukamtech@example.com"
+                        placeholder="poukamtech@..."
                         value={formik.values.customerEmail}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -298,7 +298,7 @@ export default function CheckoutPage() {
                       <Input
                         id="customerWhatsapp"
                         name="customerWhatsapp"
-                        placeholder="+237 696 841 451"
+                        placeholder="+237 696..."
                         value={formik.values.customerWhatsapp}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
@@ -338,7 +338,7 @@ export default function CheckoutPage() {
                       <Input
                         id="shippingName"
                         name="shippingName"
-                        placeholder="Name of the person receiving the order"
+                        placeholder="Recipient name..."
                         value={
                           formik.values.shippingName ||
                           formik.values.customerName
@@ -353,7 +353,7 @@ export default function CheckoutPage() {
                       <Input
                         id="shippingPhone"
                         name="shippingPhone"
-                        placeholder="+237 696 841 451"
+                        placeholder="+237 696..."
                         value={
                           formik.values.shippingPhone ||
                           formik.values.customerPhone
