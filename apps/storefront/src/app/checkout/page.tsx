@@ -19,6 +19,7 @@ import { apiFetch, API_ENDPOINTS } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,11 +27,15 @@ import { toast } from 'sonner';
 
 const validationSchema = Yup.object({
   customerName: Yup.string().required('Name is required'),
-  customerPhone: Yup.string().required('Phone number is required'),
+  customerPhone: Yup.string()
+    .required('Phone number is required')
+    .matches(/^\+\d{7,15}$/, 'Enter a valid number with country code (e.g. +237696000000)'),
   customerEmail: Yup.string().email('Invalid email address'),
-  customerWhatsapp: Yup.string(),
+  customerWhatsapp: Yup.string()
+    .matches(/^(\+\d{7,15})?$/, 'Enter a valid number with country code (e.g. +237696000000)'),
   shippingName: Yup.string(),
-  shippingPhone: Yup.string(),
+  shippingPhone: Yup.string()
+    .matches(/^(\+\d{7,15})?$/, 'Enter a valid number with country code (e.g. +237696000000)'),
   shippingAddress: Yup.string().required('Shipping address is required'),
   shippingCity: Yup.string().required('City is required'),
   shippingProvince: Yup.string().required('Province is required'),
@@ -260,13 +265,14 @@ export default function CheckoutPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="customerPhone">Phone *</Label>
-                      <Input
+                      <PhoneInput
                         id="customerPhone"
-                        name="customerPhone"
-                        placeholder="+237 696..."
                         value={formik.values.customerPhone}
-                        onChange={handleBillingChange}
-                        onBlur={formik.handleBlur}
+                        onChange={(v) => {
+                          formik.setFieldValue('customerPhone', v);
+                          if (sameAsBilling) formik.setFieldValue('shippingPhone', v);
+                        }}
+                        onBlur={() => formik.setFieldTouched('customerPhone', true)}
                       />
                       {fieldError('customerPhone') && (
                         <p className="text-xs text-destructive">
@@ -295,14 +301,18 @@ export default function CheckoutPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="customerWhatsapp">WhatsApp</Label>
-                      <Input
+                      <PhoneInput
                         id="customerWhatsapp"
-                        name="customerWhatsapp"
-                        placeholder="+237 696..."
-                        value={formik.values.customerWhatsapp}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
+                        value={formik.values.customerWhatsapp ?? ''}
+                        onChange={(v) => formik.setFieldValue('customerWhatsapp', v)}
+                        onBlur={() => formik.setFieldTouched('customerWhatsapp', true)}
+                        placeholder="same as phone"
                       />
+                      {fieldError('customerWhatsapp') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('customerWhatsapp')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -350,18 +360,18 @@ export default function CheckoutPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="shippingPhone">Recipient Phone</Label>
-                      <Input
+                      <PhoneInput
                         id="shippingPhone"
-                        name="shippingPhone"
-                        placeholder="+237 696..."
-                        value={
-                          formik.values.shippingPhone ||
-                          formik.values.customerPhone
-                        }
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
+                        value={formik.values.shippingPhone || formik.values.customerPhone}
+                        onChange={(v) => formik.setFieldValue('shippingPhone', v)}
+                        onBlur={() => formik.setFieldTouched('shippingPhone', true)}
                         disabled={sameAsBilling}
                       />
+                      {fieldError('shippingPhone') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('shippingPhone')}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
