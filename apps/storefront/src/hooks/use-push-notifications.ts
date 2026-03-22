@@ -42,20 +42,18 @@ export function usePushNotifications(
     }
   }, [isSupported]);
 
-  // Register service worker
+  // Wait for the globally-registered service worker to be ready.
+  // Registration itself is handled by <ServiceWorkerRegister> in the layout.
   useEffect(() => {
     if (!isSupported) return;
 
-    const registerServiceWorker = async () => {
+    const waitForServiceWorker = async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
-        });
-
-        console.log('[Push] Service worker registered:', registration);
+        const registration = await navigator.serviceWorker.ready;
+        console.log('[Push] Service worker ready:', registration.scope);
         setServiceWorkerReady(true);
 
-        // Check for existing subscription
+        // Check for existing push subscription
         const existingSubscription =
           await registration.pushManager.getSubscription();
         if (existingSubscription) {
@@ -63,12 +61,12 @@ export function usePushNotifications(
           onSubscriptionChange?.(existingSubscription);
         }
       } catch (err) {
-        console.error('[Push] Service worker registration failed:', err);
-        setError('Failed to register service worker');
+        console.error('[Push] Service worker not available:', err);
+        setError('Service worker unavailable');
       }
     };
 
-    registerServiceWorker();
+    waitForServiceWorker();
   }, [isSupported, onSubscriptionChange]);
 
   // Auto-request permission if enabled
@@ -126,7 +124,7 @@ export function usePushNotifications(
         throw new Error('Failed to get VAPID key');
       }
 
-      const { publicKey } = await vapidResponse.json();
+      const { data: { publicKey } } = await vapidResponse.json();
 
       // Get service worker registration
       const registration = await navigator.serviceWorker.ready;
