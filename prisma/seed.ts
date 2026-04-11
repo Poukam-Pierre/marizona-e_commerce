@@ -160,12 +160,12 @@ async function main() {
 
     // checkout settings
     {
-      key: 'whatsapp_enabled',
+      key: 'whatsappEnabled',
       value: JSON.stringify(true),
       category: 'checkout',
     },
     {
-      key: 'whatsapp_number',
+      key: 'whatsappNumber',
       value: JSON.stringify('+237696841451'),
       category: 'checkout',
     },

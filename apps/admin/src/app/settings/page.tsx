@@ -328,7 +328,6 @@ export default function SettingsPage() {
           setting.value !== ''
         );
       });
-      console.log('settingsToUpdate', settingsToUpdate);
       await updateSettings.mutateAsync({ settings: settingsToUpdate });
       enqueueSnackbar('Settings saved successfully!', { variant: 'success' });
     } catch (error: unknown) {
