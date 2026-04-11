@@ -388,7 +388,7 @@ model Order {
   tax          Float @default(0)
   total        Float
 
-  currency String @default("IDR")
+  currency String @default("XAF")
 
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)

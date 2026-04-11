@@ -119,8 +119,7 @@ class ProductVariantDto {
   @Min(0)
   weight?: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
   @IsUrl()
   image!: string;
@@ -154,7 +153,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   @MaxLength(5000)
-  description!: string;
+  description?: string;
 
   @ApiProperty({ enum: ProductType, default: 'PHYSICAL' })
   @IsEnum(ProductType)
@@ -251,12 +250,12 @@ export class CreateProductDto {
   @MaxLength(255)
   ownerName?: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
   @MaxLength(50)
   ownerWhatsapp!: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
   categoryId!: string;
 
@@ -287,7 +286,7 @@ export class CreateProductDto {
   @MaxLength(500)
   metaDescription?: string;
 
-  @ApiPropertyOptional({ type: [ProductImageDto] })
+  @ApiProperty({ type: [ProductImageDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageDto)
