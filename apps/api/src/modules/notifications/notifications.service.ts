@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
   async generateWhatsAppCheckoutLink(
     orderId: string,
@@ -56,10 +60,12 @@ export class NotificationsService {
     const formattedPhone = phoneNumber.replace(/\D/g, '');
 
     // Build message
+    const { code } = await this.currencyService.getConfig();
+    const fmt = (price: number) => this.currencyService.format(price, code);
+
     const items = order.items
       .map((item) => {
-        const price = this.formatPrice(item.totalPrice);
-        return `- ${item.productName} x${item.quantity} = Rp ${price}`;
+        return `- ${item.productName} x${item.quantity} = ${fmt(item.totalPrice)}`;
       })
       .join('\n');
 
@@ -70,9 +76,9 @@ export class NotificationsService {
 📦 *Order Items:*
 ${items}
 
-💰 *Subtotal:* FCFA ${this.formatPrice(order.subtotal)}
-🚚 *Shipping:* FCFA ${this.formatPrice(order.shippingCost)}
-💰 *Total:* FCFA ${this.formatPrice(order.total)}
+💰 *Subtotal:* ${fmt(order.subtotal)}
+🚚 *Shipping:* ${fmt(order.shippingCost)}
+💰 *Total:* ${fmt(order.total)}
 
 👤 *Name:* ${order.shippingName}
 📱 *Phone:* ${order.shippingPhone}
@@ -124,6 +130,7 @@ Please confirm my order. Thank you! 🙏`;
       .map((item) => `- ${item.productName} x${item.quantity}`)
       .join('\n');
 
+    const { code } = await this.currencyService.getConfig();
     const message = `✅ *Order Confirmed!*
 
 📄 *Order ID:* ${order.orderNumber}
@@ -131,7 +138,7 @@ Please confirm my order. Thank you! 🙏`;
 📦 *Items:*
 ${items}
 
-💰 *Total:* FCFA ${this.formatPrice(order.total)}
+💰 *Total:* ${this.currencyService.format(order.total, code)}
 
 Thank you for your purchase! 🙏`;
 
@@ -171,7 +178,5 @@ Thank you! 🙏`;
     return { message };
   }
 
-  private formatPrice(price: number): string {
-    return price.toLocaleString('id-ID');
-  }
+
 }

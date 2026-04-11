@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 import * as webpush from 'web-push';
 import {
   CreatePushSubscriptionDto,
@@ -23,7 +24,10 @@ export interface PushPayload {
 export class PushNotificationService {
   private readonly logger = new Logger(PushNotificationService.name);
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {
     // Configure VAPID keys
     const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -197,9 +201,10 @@ export class PushNotificationService {
     price: number;
     image?: string | null;
   }): Promise<void> {
+    const { code } = await this.currencyService.getConfig();
     const payload: PushPayload = {
       title: 'New Product Available! 🎉',
-      body: `${product.name} - ${this.formatPrice(product.price)}`,
+      body: `${product.name} - ${this.currencyService.format(product.price, code)}`,
       icon: product.image || '/icon-192x192.png',
       badge: '/badge-72x72.png',
       data: {
@@ -224,13 +229,5 @@ export class PushNotificationService {
     return publicKey;
   }
 
-  /**
-   * Format price for display
-   */
-  private formatPrice(price: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'XAF',
-    }).format(price);
-  }
+
 }

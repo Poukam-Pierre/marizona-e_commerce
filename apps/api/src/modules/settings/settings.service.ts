@@ -1,16 +1,23 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 import {
   CreateSettingDto,
   UpdateSettingDto,
   BulkUpdateSettingDto,
 } from './dto/update-setting.dto';
 
+/** Setting keys whose changes require the currency cache to be flushed. */
+const CURRENCY_SETTING_KEYS = new Set(['currency', 'currencySymbol']);
+
 @Injectable()
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
   async findAll() {
     const settings = await this.prisma.setting.findMany({
@@ -90,6 +97,10 @@ export class SettingsService {
       },
     });
 
+    if (CURRENCY_SETTING_KEYS.has(dto.key)) {
+      this.currencyService.invalidateCache();
+    }
+
     this.logger.log(`Setting updated: ${dto.key}`);
     return setting;
   }
@@ -119,6 +130,15 @@ export class SettingsService {
     }
 
     this.logger.log(`Bulk updated ${results.length} settings`);
+
+    // Invalidate currency cache if any currency-related keys were touched
+    const hasCurrencyKey = dto.settings.some((s) =>
+      CURRENCY_SETTING_KEYS.has(s.key),
+    );
+    if (hasCurrencyKey) {
+      this.currencyService.invalidateCache();
+    }
+
     return results;
   }
 
@@ -138,6 +158,10 @@ export class SettingsService {
       where: { key },
       data: { value: valueStr },
     });
+
+    if (CURRENCY_SETTING_KEYS.has(key)) {
+      this.currencyService.invalidateCache();
+    }
 
     this.logger.log(`Setting updated: ${key}`);
     return setting;

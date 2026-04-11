@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
@@ -15,7 +16,10 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
   async findAll(query: QueryOrderDto): Promise<PaginatedResult<any>> {
     const {
@@ -396,10 +400,13 @@ export class OrdersService {
     const formattedPhone = phoneNumber.replace(/\D/g, '');
 
     // Build message
+    const { code } = await this.currencyService.getConfig();
+    const fmt = (price: number) => this.currencyService.format(price, code);
+
     const items = order.items
       .map(
         (item) =>
-          `- ${item.productName} x${item.quantity} = FCFA ${this.formatPrice(item.totalPrice)}`,
+          `- ${item.productName} x${item.quantity} = ${fmt(item.totalPrice)}`,
       )
       .join('\n');
 
@@ -410,9 +417,9 @@ export class OrdersService {
 📦 *Order Items:*
 ${items}
 
-💰 *Subtotal:* FCFA ${this.formatPrice(order.subtotal)}
-🚚 *Shipping:* FCFA ${this.formatPrice(order.shippingCost)}
-💰 *Total:* FCFA ${this.formatPrice(order.total)}
+💰 *Subtotal:* ${fmt(order.subtotal)}
+🚚 *Shipping:* ${fmt(order.shippingCost)}
+💰 *Total:* ${fmt(order.total)}
 
 👤 *Name:* ${order.shippingName}
 📱 *Phone:* ${order.shippingPhone}
@@ -511,9 +518,5 @@ Please confirm my order. Thank you! 🙏`;
         newStock: 0,
       },
     });
-  }
-
-  private formatPrice(price: number): string {
-    return price.toLocaleString('id-ID');
   }
 }
