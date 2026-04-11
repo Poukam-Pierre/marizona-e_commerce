@@ -92,16 +92,10 @@ export class NotificationsGateway
     };
   }
 
-  // Emit product created notification to all connected clients
   emitProductCreated(notification: ProductNotification) {
     this.logger.log(
       `Emitting product.created notification: ${notification.product.name}`,
     );
-
-    // Broadcast to all clients
-    this.server.emit('product.created', notification);
-
-    // Also broadcast to 'products' room for targeted subscriptions
     this.server.to('products').emit('product.created', notification);
   }
 
