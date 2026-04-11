@@ -16,6 +16,13 @@ import { ProductType } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 class ProductImageDto {
+  @ApiPropertyOptional({
+    description: 'Existing image ID — include to update, omit to create',
+  })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiProperty()
   @IsString()
   @IsUrl()
@@ -37,6 +44,13 @@ class ProductImageDto {
 }
 
 class ProductVariantDto {
+  @ApiPropertyOptional({
+    description: 'Existing variant ID — include to update, omit to create',
+  })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiProperty()
   @IsString()
   @MinLength(1)

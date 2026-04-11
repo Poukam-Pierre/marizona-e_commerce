@@ -67,7 +67,7 @@ export function usePushNotifications(
     };
 
     waitForServiceWorker();
-  }, [isSupported, onSubscriptionChange]);
+  }, [isSupported]);
 
   // Auto-request permission if enabled
   useEffect(() => {

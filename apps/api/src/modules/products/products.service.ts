@@ -409,38 +409,110 @@ export class ProductsService {
         );
       }
     }
-    // Destructure to separate unproper type fields for update logic
+    // Destructure to separate relation fields from scalar fields
     const { categoryId, images, variants, ...rest } = dto;
 
-    const product = await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...(images
-          ? {
-              image:
-                images.find((img) => img.isPrimary)?.url ||
-                existingProduct.image,
-              images: {
-                deleteMany: {},
-                create: images.map((img, index) => ({
-                  url: img.url,
-                  alt: img.alt || existingProduct.name,
-                  order: img.order ?? index,
-                  isPrimary: img.isPrimary ?? index === 0,
-                })),
-              },
-            }
-          : {}),
-        ...(variants ? { variants: { deleteMany: {}, create: variants } } : {}),
-        ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
-        updatedAt: new Date(),
-      },
-      include: {
-        category: {
-          select: { id: true, name: true, slug: true },
+    const product = await this.prisma.$transaction(async (tx) => {
+      // 1. Update scalar product fields
+      await tx.product.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
+          updatedAt: new Date(),
         },
-      },
+      });
+
+      // 2. Sync images — non-destructive:
+      //    - Update images whose id is included in the payload
+      //    - Create images with no id
+      //    - Hard-delete images NOT in the new list (safe: no entity holds a FK to product_images.id)
+      if (images !== undefined) {
+        const incomingIds = images
+          .filter((img) => img.id)
+          .map((img) => img.id as string);
+
+        await tx.productImage.deleteMany({
+          where: {
+            productId: id,
+            ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {}),
+          },
+        });
+
+        for (const [index, img] of images.entries()) {
+          if (img.id) {
+            await tx.productImage.update({
+              where: { id: img.id },
+              data: {
+                url: img.url,
+                alt: img.alt || existingProduct.name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? false,
+              },
+            });
+          } else {
+            await tx.productImage.create({
+              data: {
+                productId: id,
+                url: img.url,
+                alt: img.alt || existingProduct.name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? false,
+              },
+            });
+          }
+        }
+
+        // Keep the product.image (primary image URL) in sync
+        const primaryImage = images.find((img) => img.isPrimary);
+        await tx.product.update({
+          where: { id },
+          data: { image: primaryImage?.url ?? existingProduct.image },
+        });
+      }
+
+      // 3. Sync variants — soft-delete-aware:
+      //    - Update variants whose id is included in the payload
+      //    - Create variants with no id
+      //    - Soft-delete variants NOT in the new list (isActive: false) instead of
+      //      hard-deleting them, because CartItem.variantId, OrderItem.variantId and
+      //      InventoryMovement.variantId hold references to variant IDs. Hard-deleting
+      //      would corrupt active carts and historical order/inventory records.
+      if (variants !== undefined) {
+        const incomingIds = variants
+          .filter((v) => v.id)
+          .map((v) => v.id as string);
+
+        await tx.productVariant.updateMany({
+          where: {
+            productId: id,
+            ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {}),
+          },
+          data: { isActive: false },
+        });
+
+        for (const { id: variantId, ...variantData } of variants) {
+          if (variantId) {
+            await tx.productVariant.update({
+              where: { id: variantId },
+              data: variantData,
+            });
+          } else {
+            await tx.productVariant.create({
+              data: { productId: id, ...variantData },
+            });
+          }
+        }
+      }
+
+      return tx.product.findUniqueOrThrow({
+        where: { id },
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+          images: { orderBy: { order: 'asc' } },
+          variants: { where: { isActive: true } },
+        },
+      });
     });
 
     // Clear cache
