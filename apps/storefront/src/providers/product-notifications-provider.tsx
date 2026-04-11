@@ -48,70 +48,29 @@ export function ProductNotificationsProvider({
     <>
       {children}
 
-      {/* Connection indicator (optional) */}
+      {/* Connection indicator (development only) */}
       {process.env.NODE_ENV === 'development' && (
         <div
-          style={{
-            position: 'fixed',
-            bottom: '80px',
-            right: '20px',
-            padding: '8px 12px',
-            background: isConnected ? '#10b981' : '#ef4444',
-            color: 'white',
-            borderRadius: '6px',
-            fontSize: '12px',
-            zIndex: 9999,
-            opacity: 0.8,
-          }}
+          className={[
+            'fixed bottom-20 right-5 px-3 py-2 rounded-md text-white text-xs z-[9999] opacity-80',
+            isConnected ? 'bg-emerald-500' : 'bg-red-500',
+          ].join(' ')}
         >
           {isConnected ? '🟢 Live' : '🔴 Offline'}
         </div>
       )}
 
       {/* Toast notifications */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 10000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          maxWidth: '320px',
-        }}
-      >
+      <div className="fixed bottom-5 right-5 z-[10000] flex flex-col gap-2.5 max-w-xs">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            style={{
-              padding: '12px 16px',
-              background: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              animation: 'slideInRight 0.3s ease-out',
-            }}
+            className="px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-md animate-slide-in-right"
           >
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>
-              {toast.message}
-            </p>
+            <p className="m-0 text-sm font-medium">{toast.message}</p>
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </>
   );
 }
