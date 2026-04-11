@@ -47,6 +47,11 @@ export function useProductNotifications(
     onProductCreatedRef.current = onProductCreated;
   }, [onProductCreated]);
 
+  // Serialize topics so an inline array literal from the caller (e.g.
+  // topics={['products']}) does not create a new reference on every render and
+  // cause repeated socket connect/disconnect cycles.
+  const topicsKey = JSON.stringify(topics);
+
   useEffect(() => {
     if (!autoConnect) return;
 
@@ -69,8 +74,9 @@ export function useProductNotifications(
       console.log('Connected to notifications server');
 
       // Subscribe to topics
-      if (topics.length > 0) {
-        socketInstance.emit('subscribe', { topics });
+      const parsedTopics: string[] = JSON.parse(topicsKey);
+      if (parsedTopics.length > 0) {
+        socketInstance.emit('subscribe', { topics: parsedTopics });
       }
     });
 
@@ -101,7 +107,7 @@ export function useProductNotifications(
     return () => {
       socketInstance.disconnect();
     };
-  }, [autoConnect, topics]);
+  }, [autoConnect, topicsKey]);
 
   const subscribe = useCallback(
     (newTopics: string[]) => {

@@ -134,7 +134,6 @@ export default function ProductsPage() {
   };
 
   const confirmDelete = async () => {
-    console.log('Deleting product with ID:', selectedProduct);
     if (selectedProduct) {
       try {
         await deleteProduct.mutateAsync(selectedProduct);
