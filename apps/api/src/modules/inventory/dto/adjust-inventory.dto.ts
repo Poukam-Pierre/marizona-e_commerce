@@ -3,7 +3,6 @@ import {
   IsOptional,
   IsEnum,
   IsNumber,
-  Min,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';

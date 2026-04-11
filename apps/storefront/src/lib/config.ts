@@ -22,16 +22,16 @@ export const API_ENDPOINTS = {
 
 // App Configuration
 export const APP_CONFIG = {
-  name: 'ShopNx',
+  name: 'ShopPk',
   description: 'Professional E-Commerce Store',
-  currency: 'IDR',
-  currencySymbol: 'Rp',
+  currency: 'XAF',
+  currencySymbol: 'FCFA',
   defaultPageSize: 12,
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+6281234567890',
 } as const;
 
 // Storage Keys
 export const STORAGE_KEYS = {
-  CART: 'shopnx_cart',
-  THEME: 'shopnx_theme',
+  CART: 'shoppk_cart',
+  THEME: 'shoppk_theme',
 } as const;

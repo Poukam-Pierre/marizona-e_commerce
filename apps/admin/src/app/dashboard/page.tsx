@@ -212,7 +212,7 @@ export default function DashboardPage() {
         <Card>
           <CardContent>
             <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-              Welcome to ShopNx Admin
+              Welcome to ShopPk Admin
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Use the sidebar to navigate between different sections. You can

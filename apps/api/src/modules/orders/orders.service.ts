@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { QueryOrderDto } from './dto/query-order.dto';
@@ -15,10 +16,22 @@ import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
   async findAll(query: QueryOrderDto): Promise<PaginatedResult<any>> {
-    const { page = 1, limit = 10, status, paymentStatus, customerId, search, startDate, endDate } = query;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      paymentStatus,
+      customerId,
+      search,
+      startDate,
+      endDate,
+    } = query;
     const skip = (page - 1) * limit;
 
     // Build where clause
@@ -98,12 +111,24 @@ export class OrdersService {
       where: { id },
       include: {
         customer: {
-          select: { id: true, name: true, email: true, phone: true, whatsappNumber: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            whatsappNumber: true,
+          },
         },
         items: {
           include: {
             product: {
-              select: { id: true, name: true, sku: true, image: true, type: true },
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                image: true,
+                type: true,
+              },
             },
           },
         },
@@ -134,7 +159,9 @@ export class OrdersService {
     });
 
     if (products.length !== productIds.length) {
-      throw new BadRequestException('One or more products not found or inactive');
+      throw new BadRequestException(
+        'One or more products not found or inactive',
+      );
     }
 
     // Build order items with price snapshots
@@ -180,7 +207,8 @@ export class OrdersService {
       // Check inventory for physical products
       if (product.type === 'PHYSICAL' && product.inventoryTracked) {
         const availableStock = item.variantId
-          ? product.variants?.find((v) => v.id === item.variantId)?.inventoryQuantity || 0
+          ? product.variants?.find((v) => v.id === item.variantId)
+              ?.inventoryQuantity || 0
           : product.inventoryQuantity;
 
         if (availableStock < item.quantity) {
@@ -211,7 +239,8 @@ export class OrdersService {
         shippingPostalCode: dto.shippingPostalCode,
         shippingCountry: dto.shippingCountry || 'Indonesia',
         subtotal,
-        total: subtotal, // Will be updated with shipping, tax, etc.
+        shippingCost: dto.shippingCost ?? 0,
+        total: subtotal + (dto.shippingCost ?? 0),
         couponCode: dto.couponCode,
         customerNotes: dto.customerNotes,
         items: {
@@ -233,7 +262,11 @@ export class OrdersService {
     for (const item of dto.items) {
       const product = products.find((p) => p.id === item.productId);
       if (product?.type === 'PHYSICAL' && product.inventoryTracked) {
-        await this.decreaseInventory(item.productId, item.variantId, item.quantity);
+        await this.decreaseInventory(
+          item.productId,
+          item.variantId,
+          item.quantity,
+        );
       }
     }
 
@@ -331,7 +364,11 @@ export class OrdersService {
     // Restore inventory
     for (const item of existingOrder.items) {
       if (item.productId) {
-        await this.increaseInventory(item.productId, item.variantId, item.quantity);
+        await this.increaseInventory(
+          item.productId,
+          item.variantId,
+          item.quantity,
+        );
       }
     }
 
@@ -354,29 +391,45 @@ export class OrdersService {
     // Get WhatsApp number (prefer owner's WhatsApp if available)
     const phoneNumber = order.customerWhatsapp || order.customerPhone;
     if (!phoneNumber) {
-      throw new BadRequestException('No WhatsApp number available for this order');
+      throw new BadRequestException(
+        'No WhatsApp number available for this order',
+      );
     }
 
     // Format phone number (remove non-digits)
     const formattedPhone = phoneNumber.replace(/\D/g, '');
 
     // Build message
+    const { code } = await this.currencyService.getConfig();
+    const fmt = (price: number) => this.currencyService.format(price, code);
+
     const items = order.items
-      .map((item) => `- ${item.productName} x${item.quantity} = Rp ${this.formatPrice(item.totalPrice)}`)
+      .map(
+        (item) =>
+          `- ${item.productName} x${item.quantity} = ${fmt(item.totalPrice)}`,
+      )
       .join('\n');
 
-    const message = `Halo, saya ingin memesan:
-    
-Order ID: ${order.orderNumber}
+    const message = `Hello, I would like to place an order:
 
+📄 *Order ID:* ${order.orderNumber}
+
+📦 *Order Items:*
 ${items}
 
-Total: Rp ${this.formatPrice(order.total)}
+💰 *Subtotal:* ${fmt(order.subtotal)}
+🚚 *Shipping:* ${fmt(order.shippingCost)}
+💰 *Total:* ${fmt(order.total)}
 
-Nama: ${order.shippingName}
-Alamat: ${order.shippingAddress}, ${order.shippingCity}, ${order.shippingProvince} ${order.shippingPostalCode}
+👤 *Name:* ${order.shippingName}
+📱 *Phone:* ${order.shippingPhone}
+📍 *Shipping Address:*
+${order.shippingAddress}
+${order.shippingCity}, ${order.shippingProvince} ${order.shippingPostalCode}
 
-Mohon konfirmasi pesanan saya. Terima kasih!`;
+${order.customerNotes ? `📝 *Notes:* ${order.customerNotes}` : ''}
+
+Please confirm my order. Thank you! 🙏`;
 
     const encodedMessage = encodeURIComponent(message);
     const url = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
@@ -405,7 +458,11 @@ Mohon konfirmasi pesanan saya. Terima kasih!`;
     return `ORD-${dateStr}-${sequence}`;
   }
 
-  private async decreaseInventory(productId: string, variantId: string | undefined, quantity: number) {
+  private async decreaseInventory(
+    productId: string,
+    variantId: string | undefined,
+    quantity: number,
+  ) {
     if (variantId) {
       await this.prisma.productVariant.update({
         where: { id: variantId },
@@ -432,7 +489,11 @@ Mohon konfirmasi pesanan saya. Terima kasih!`;
     });
   }
 
-  private async increaseInventory(productId: string, variantId: string | undefined, quantity: number) {
+  private async increaseInventory(
+    productId: string,
+    variantId: string | undefined | null,
+    quantity: number,
+  ) {
     if (variantId) {
       await this.prisma.productVariant.update({
         where: { id: variantId },
@@ -457,9 +518,5 @@ Mohon konfirmasi pesanan saya. Terima kasih!`;
         newStock: 0,
       },
     });
-  }
-
-  private formatPrice(price: number): string {
-    return price.toLocaleString('id-ID');
   }
 }

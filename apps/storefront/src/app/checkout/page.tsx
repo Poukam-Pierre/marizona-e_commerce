@@ -1,45 +1,51 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
   Package,
-  Phone,
-  Mail,
   User,
   MapPin,
-  Building2,
   MessageCircle,
   Loader2,
   CheckCircle,
 } from 'lucide-react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { useCart } from '@/providers/cart-provider';
 import { useCreateOrder } from '@/hooks/use-api';
+import { apiFetch, API_ENDPOINTS } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
-interface CheckoutFormData {
-  customerName: string;
-  customerPhone: string;
-  customerEmail: string;
-  customerWhatsapp: string;
-  shippingName: string;
-  shippingPhone: string;
-  shippingAddress: string;
-  shippingCity: string;
-  shippingProvince: string;
-  shippingPostalCode: string;
-  customerNotes: string;
-}
+const validationSchema = Yup.object({
+  customerName: Yup.string().required('Name is required'),
+  customerPhone: Yup.string()
+    .required('Phone number is required')
+    .matches(/^\+\d{7,15}$/, 'Enter a valid number with country code (e.g. +237696000000)'),
+  customerEmail: Yup.string().email('Invalid email address'),
+  customerWhatsapp: Yup.string()
+    .matches(/^(\+\d{7,15})?$/, 'Enter a valid number with country code (e.g. +237696000000)'),
+  shippingName: Yup.string(),
+  shippingPhone: Yup.string()
+    .matches(/^(\+\d{7,15})?$/, 'Enter a valid number with country code (e.g. +237696000000)'),
+  shippingAddress: Yup.string().required('Shipping address is required'),
+  shippingCity: Yup.string().required('City is required'),
+  shippingProvince: Yup.string().required('Province is required'),
+  shippingPostalCode: Yup.string(),
+  customerNotes: Yup.string(),
+});
 
-const initialFormData: CheckoutFormData = {
+type CheckoutFormValues = Yup.InferType<typeof validationSchema>;
+
+const initialValues: CheckoutFormValues = {
   customerName: '',
   customerPhone: '',
   customerEmail: '',
@@ -54,110 +60,107 @@ const initialFormData: CheckoutFormData = {
 };
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { items, totalPrice, clearCart } = useCart();
   const createOrder = useCreateOrder();
-  
-  const [formData, setFormData] = useState<CheckoutFormData>(initialFormData);
+
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [orderCreated, setOrderCreated] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
 
   const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString('id-ID')}`;
+    return `FCFA ${price.toLocaleString('id-ID')}`;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const shippingCost = Math.min(1000, Math.round(totalPrice * 0));
+  const orderTotal = totalPrice + shippingCost;
 
-    // Auto-fill shipping if same as billing
+  const formik = useFormik<CheckoutFormValues>({
+    initialValues,
+    validationSchema,
+    onSubmit: async (values) => {
+      if (items.length === 0) {
+        toast.error('Your cart is empty');
+        return;
+      }
+
+      try {
+        const orderData = {
+          customerName: values.customerName,
+          customerPhone: values.customerPhone,
+          customerEmail: values.customerEmail || undefined,
+          customerWhatsapp: values.customerWhatsapp || values.customerPhone,
+          shippingName: values.shippingName || values.customerName,
+          shippingPhone: values.shippingPhone || values.customerPhone,
+          shippingAddress: values.shippingAddress,
+          shippingCity: values.shippingCity,
+          shippingProvince: values.shippingProvince,
+          shippingPostalCode: values.shippingPostalCode,
+          shippingCost: shippingCost > 0 ? shippingCost : undefined,
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+          customerNotes: values.customerNotes || undefined,
+        };
+
+        const order = await createOrder.mutateAsync(orderData);
+
+        // Track purchased products locally so the product page can gate the rating UI
+        try {
+          const existing = JSON.parse(
+            localStorage.getItem('purchased-product-ids') ?? '[]',
+          ) as string[];
+          const newIds = items.map((item) => item.productId);
+          const merged = Array.from(new Set([...existing, ...newIds]));
+          localStorage.setItem('purchased-product-ids', JSON.stringify(merged));
+        } catch {
+          // non-critical – ignore storage errors
+        }
+
+        // Fetch WhatsApp URL from backend (includes properly formatted message)
+        const { url: waUrl } = await apiFetch<{ url: string }>(
+          `${API_ENDPOINTS.orders}/${order.id}/whatsapp`,
+        );
+
+        setWhatsappUrl(waUrl);
+        setOrderCreated(true);
+        clearCart();
+
+        toast.success('Order created successfully!');
+      } catch (error) {
+        toast.error('Failed to create order. Please try again.');
+        console.error('Order creation failed:', error);
+      }
+    },
+  });
+
+  const handleBillingChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    formik.handleChange(e);
     if (sameAsBilling) {
-      if (name === 'customerName') {
-        setFormData((prev) => ({ ...prev, shippingName: value }));
-      } else if (name === 'customerPhone') {
-        setFormData((prev) => ({ ...prev, shippingPhone: value }));
+      if (e.target.name === 'customerName') {
+        formik.setFieldValue('shippingName', e.target.value);
+      } else if (e.target.name === 'customerPhone') {
+        formik.setFieldValue('shippingPhone', e.target.value);
       }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (items.length === 0) {
-      toast.error('Your cart is empty');
-      return;
-    }
-
-    // Validate required fields
-    if (!formData.customerName || !formData.customerPhone || !formData.shippingAddress) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      const orderData = {
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        customerEmail: formData.customerEmail || undefined,
-        customerWhatsapp: formData.customerWhatsapp || formData.customerPhone,
-        shippingName: formData.shippingName || formData.customerName,
-        shippingPhone: formData.shippingPhone || formData.customerPhone,
-        shippingAddress: formData.shippingAddress,
-        shippingCity: formData.shippingCity,
-        shippingProvince: formData.shippingProvince,
-        shippingPostalCode: formData.shippingPostalCode,
-        items: items.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-        })),
-        customerNotes: formData.customerNotes || undefined,
-      };
-
-      const order = await createOrder.mutateAsync(orderData);
-      
-      // Generate WhatsApp URL
-      const phone = items[0]?.ownerWhatsapp?.replace(/\D/g, '') || '6281234567890';
-      const message = generateWhatsAppMessage(order, items);
-      const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-      
-      setWhatsappUrl(waUrl);
-      setOrderCreated(true);
-      clearCart();
-      
-      toast.success('Order created successfully!');
-    } catch (error) {
-      toast.error('Failed to create order. Please try again.');
-      console.error('Order creation failed:', error);
+  const handleSameAsBillingChange = (checked: boolean) => {
+    setSameAsBilling(checked);
+    if (checked) {
+      formik.setFieldValue('shippingName', formik.values.customerName);
+      formik.setFieldValue('shippingPhone', formik.values.customerPhone);
     }
   };
 
-  const generateWhatsAppMessage = (order: any, cartItems: any[]) => {
-    const items = cartItems
-      .map((item) => `- ${item.productName} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`)
-      .join('\n');
-
-    return `Halo, saya ingin memesan:
-
-📄 *Order ID:* ${order.orderNumber}
-
-📦 *Item Pesanan:*
-${items}
-
-💰 *Total:* ${formatPrice(totalPrice)}
-
-👤 *Nama:* ${formData.customerName}
-📱 *Telepon:* ${formData.customerPhone}
-📍 *Alamat:*
-${formData.shippingAddress}
-${formData.shippingCity}, ${formData.shippingProvince}
-${formData.shippingPostalCode}
-
-${formData.customerNotes ? `📝 *Catatan:* ${formData.customerNotes}` : ''}
-
-Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
-  };
+  // Helper: field error shown only after the field has been touched
+  const fieldError = (name: keyof CheckoutFormValues) =>
+    formik.touched[name] && formik.errors[name]
+      ? (formik.errors[name] as string)
+      : null;
 
   if (items.length === 0 && !orderCreated) {
     return (
@@ -187,9 +190,10 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
             </div>
             <h1 className="text-2xl font-bold mb-2">Order Created!</h1>
             <p className="text-muted-foreground mb-6">
-              Your order has been created successfully. Click the button below to send your order via WhatsApp.
+              Your order has been created successfully. Click the button below
+              to send your order via WhatsApp.
             </p>
-            
+
             {whatsappUrl && (
               <Button
                 className="w-full gap-2 bg-green-600 hover:bg-green-700"
@@ -202,9 +206,9 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                 Send Order via WhatsApp
               </Button>
             )}
-            
+
             <Separator className="my-6" />
-            
+
             <Link href="/">
               <Button variant="outline" className="w-full">
                 Continue Shopping
@@ -229,7 +233,7 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
 
         <h1 className="text-2xl font-bold mb-6">Checkout</h1>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={formik.handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Form */}
             <div className="lg:col-span-2 space-y-6">
@@ -248,22 +252,33 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                       <Input
                         id="customerName"
                         name="customerName"
-                        placeholder="John Doe"
-                        value={formData.customerName}
-                        onChange={handleInputChange}
-                        required
+                        placeholder="Your name..."
+                        value={formik.values.customerName}
+                        onChange={handleBillingChange}
+                        onBlur={formik.handleBlur}
                       />
+                      {fieldError('customerName') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('customerName')}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="customerPhone">Phone *</Label>
-                      <Input
+                      <PhoneInput
                         id="customerPhone"
-                        name="customerPhone"
-                        placeholder="+62 812 3456 7890"
-                        value={formData.customerPhone}
-                        onChange={handleInputChange}
-                        required
+                        value={formik.values.customerPhone}
+                        onChange={(v) => {
+                          formik.setFieldValue('customerPhone', v);
+                          if (sameAsBilling) formik.setFieldValue('shippingPhone', v);
+                        }}
+                        onBlur={() => formik.setFieldTouched('customerPhone', true)}
                       />
+                      {fieldError('customerPhone') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('customerPhone')}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -273,20 +288,31 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                         id="customerEmail"
                         name="customerEmail"
                         type="email"
-                        placeholder="john@example.com"
-                        value={formData.customerEmail}
-                        onChange={handleInputChange}
+                        placeholder="poukamtech@..."
+                        value={formik.values.customerEmail}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
                       />
+                      {fieldError('customerEmail') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('customerEmail')}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="customerWhatsapp">WhatsApp</Label>
-                      <Input
+                      <PhoneInput
                         id="customerWhatsapp"
-                        name="customerWhatsapp"
-                        placeholder="+62 812 3456 7890"
-                        value={formData.customerWhatsapp}
-                        onChange={handleInputChange}
+                        value={formik.values.customerWhatsapp ?? ''}
+                        onChange={(v) => formik.setFieldValue('customerWhatsapp', v)}
+                        onBlur={() => formik.setFieldTouched('customerWhatsapp', true)}
+                        placeholder="same as phone"
                       />
+                      {fieldError('customerWhatsapp') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('customerWhatsapp')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -301,26 +327,51 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  {/* Same as billing toggle */}
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={sameAsBilling}
+                      onChange={(e) =>
+                        handleSameAsBillingChange(e.target.checked)
+                      }
+                      className="accent-primary"
+                    />
+                    Same as customer info
+                  </label>
+
+                  <div
+                    className={`grid sm:grid-cols-2 gap-4 ${sameAsBilling ? 'hidden' : ''}`}
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="shippingName">Recipient Name</Label>
                       <Input
                         id="shippingName"
                         name="shippingName"
-                        placeholder="John Doe"
-                        value={formData.shippingName || formData.customerName}
-                        onChange={handleInputChange}
+                        placeholder="Recipient name..."
+                        value={
+                          formik.values.shippingName ||
+                          formik.values.customerName
+                        }
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        disabled={sameAsBilling}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="shippingPhone">Recipient Phone</Label>
-                      <Input
+                      <PhoneInput
                         id="shippingPhone"
-                        name="shippingPhone"
-                        placeholder="+62 812 3456 7890"
-                        value={formData.shippingPhone || formData.customerPhone}
-                        onChange={handleInputChange}
+                        value={formik.values.shippingPhone || formik.values.customerPhone}
+                        onChange={(v) => formik.setFieldValue('shippingPhone', v)}
+                        onBlur={() => formik.setFieldTouched('shippingPhone', true)}
+                        disabled={sameAsBilling}
                       />
+                      {fieldError('shippingPhone') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('shippingPhone')}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -328,11 +379,16 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                     <Textarea
                       id="shippingAddress"
                       name="shippingAddress"
-                      placeholder="Jl. Sudirman No. 123, RT 01/RW 02"
-                      value={formData.shippingAddress}
-                      onChange={handleInputChange}
-                      required
+                      placeholder="Pk10, entree ruccotel, Douala Bassa"
+                      value={formik.values.shippingAddress}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
                     />
+                    {fieldError('shippingAddress') && (
+                      <p className="text-xs text-destructive">
+                        {fieldError('shippingAddress')}
+                      </p>
+                    )}
                   </div>
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
@@ -340,33 +396,50 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                       <Input
                         id="shippingCity"
                         name="shippingCity"
-                        placeholder="Jakarta"
-                        value={formData.shippingCity}
-                        onChange={handleInputChange}
-                        required
+                        placeholder="Douala"
+                        value={formik.values.shippingCity}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
                       />
+                      {fieldError('shippingCity') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('shippingCity')}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="shippingProvince">Province *</Label>
                       <Input
                         id="shippingProvince"
                         name="shippingProvince"
-                        placeholder="DKI Jakarta"
-                        value={formData.shippingProvince}
-                        onChange={handleInputChange}
-                        required
+                        placeholder="Littoral"
+                        value={formik.values.shippingProvince}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
                       />
+                      {fieldError('shippingProvince') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('shippingProvince')}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="shippingPostalCode">Postal Code *</Label>
+                      <Label htmlFor="shippingPostalCode">
+                        Postal Code (Optional)
+                      </Label>
                       <Input
                         id="shippingPostalCode"
                         name="shippingPostalCode"
                         placeholder="12345"
-                        value={formData.shippingPostalCode}
-                        onChange={handleInputChange}
-                        required
+                        value={formik.values.shippingPostalCode}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
                       />
+                      {fieldError('shippingPostalCode') && (
+                        <p className="text-xs text-destructive">
+                          {fieldError('shippingPostalCode')}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -376,13 +449,16 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-2">
-                    <Label htmlFor="customerNotes">Order Notes (Optional)</Label>
+                    <Label htmlFor="customerNotes">
+                      Order Notes (Optional)
+                    </Label>
                     <Textarea
                       id="customerNotes"
                       name="customerNotes"
                       placeholder="Any special instructions for your order..."
-                      value={formData.customerNotes}
-                      onChange={handleInputChange}
+                      value={formik.values.customerNotes}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
                     />
                   </div>
                 </CardContent>
@@ -412,23 +488,27 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
                       </div>
                     ))}
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatPrice(totalPrice)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-muted-foreground text-sm">TBD</span>
+                    <span>
+                      {shippingCost > 0 ? formatPrice(shippingCost) : 'TBD'}
+                    </span>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
-                    <span className="text-primary">{formatPrice(totalPrice)}</span>
+                    <span className="text-primary">
+                      {formatPrice(orderTotal)}
+                    </span>
                   </div>
                 </CardContent>
                 <div className="p-6 pt-0">

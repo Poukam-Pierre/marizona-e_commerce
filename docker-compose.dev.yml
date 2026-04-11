@@ -1,5 +1,5 @@
 # ============================================================================
-# ShopNx - Docker Compose for Local Development
+# ShopPk - Docker Compose for Local Development
 # ============================================================================
 
 services:
@@ -8,30 +8,30 @@ services:
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: shopnx-postgres-dev
+    container_name: shoppk-postgres-dev
     restart: unless-stopped
     environment:
-      POSTGRES_USER: shopnx
-      POSTGRES_PASSWORD: shopnx_dev_secret
-      POSTGRES_DB: shopnx
+      POSTGRES_USER: shoppk
+      POSTGRES_PASSWORD: shoppk_dev_secret
+      POSTGRES_DB: shoppk
     ports:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shopnx -d shopnx"]
+      test: ["CMD-SHELL", "pg_isready -U shoppk -d shoppk"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - shopnx-dev-network
+      - shoppk-dev-network
 
   # ---------------------------------------------------------------------------
   # Redis Cache
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: shopnx-redis-dev
+    container_name: shoppk-redis-dev
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
@@ -44,19 +44,19 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - shopnx-dev-network
+      - shoppk-dev-network
 
   # ---------------------------------------------------------------------------
   # Adminer - Database Management UI (Development only)
   # ---------------------------------------------------------------------------
   adminer:
     image: adminer:latest
-    container_name: shopnx-adminer
+    container_name: shoppk-adminer
     restart: unless-stopped
     ports:
       - "8080:8080"
     networks:
-      - shopnx-dev-network
+      - shoppk-dev-network
     profiles:
       - tools
 
@@ -65,14 +65,14 @@ services:
   # ---------------------------------------------------------------------------
   redis-commander:
     image: rediscommander/redis-commander:latest
-    container_name: shopnx-redis-commander
+    container_name: shoppk-redis-commander
     restart: unless-stopped
     environment:
       - REDIS_HOSTS=local:redis:6379
     ports:
       - "8081:8081"
     networks:
-      - shopnx-dev-network
+      - shoppk-dev-network
     profiles:
       - tools
 
@@ -80,7 +80,7 @@ services:
 # Networks
 # -----------------------------------------------------------------------------
 networks:
-  shopnx-dev-network:
+  shoppk-dev-network:
     driver: bridge
 
 # -----------------------------------------------------------------------------

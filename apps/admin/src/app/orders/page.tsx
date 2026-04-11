@@ -31,9 +31,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  FilterList as FilterIcon,
   MoreVert as MoreIcon,
-  Visibility as ViewIcon,
   WhatsApp as WhatsAppIcon,
   LocalShipping as ShippingIcon,
 } from '@mui/icons-material';
@@ -42,7 +40,10 @@ import { AdminLayout } from '@/components/layout/admin-layout';
 import { useOrders, useUpdateOrder } from '@/hooks/use-queries';
 import type { Order, OrderStatus } from '@/types';
 
-const statusColors: Record<OrderStatus, 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'> = {
+const statusColors: Record<
+  OrderStatus,
+  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
+> = {
   PENDING: 'warning',
   CONFIRMED: 'info',
   PROCESSING: 'primary',
@@ -67,12 +68,24 @@ function TableSkeleton() {
     <>
       {[1, 2, 3, 4, 5].map((row) => (
         <TableRow key={row}>
-          <TableCell><Skeleton width={120} /></TableCell>
-          <TableCell><Skeleton width={150} /></TableCell>
-          <TableCell><Skeleton width={80} /></TableCell>
-          <TableCell><Skeleton width={100} /></TableCell>
-          <TableCell><Skeleton width={80} /></TableCell>
-          <TableCell><Skeleton width={100} /></TableCell>
+          <TableCell>
+            <Skeleton width={120} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={150} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={80} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={100} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={80} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={100} />
+          </TableCell>
         </TableRow>
       ))}
     </>
@@ -81,7 +94,7 @@ function TableSkeleton() {
 
 export default function OrdersPage() {
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -100,7 +113,10 @@ export default function OrdersPage() {
 
   const updateOrder = useUpdateOrder();
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, order: Order) => {
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    order: Order,
+  ) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedOrder(order);
@@ -127,8 +143,12 @@ export default function OrdersPage() {
       });
       enqueueSnackbar('Order status updated', { variant: 'success' });
       setStatusDialogOpen(false);
-    } catch (error: any) {
-      enqueueSnackbar(error.message || 'Failed to update status', { variant: 'error' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      enqueueSnackbar(message, {
+        variant: 'error',
+      });
     }
   };
 
@@ -136,9 +156,12 @@ export default function OrdersPage() {
     const phone = order.customerWhatsapp || order.customerPhone;
     if (phone) {
       const message = encodeURIComponent(
-        `Hi ${order.customerName}, this is regarding your order #${order.orderNumber}.`
+        `Hi ${order.customerName}, this is regarding your order #${order.orderNumber}.`,
       );
-      window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`, '_blank');
+      window.open(
+        `https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`,
+        '_blank',
+      );
     } else {
       enqueueSnackbar('No WhatsApp number available', { variant: 'warning' });
     }
@@ -146,9 +169,9 @@ export default function OrdersPage() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-CM', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'XAF',
     }).format(value);
   };
 
@@ -235,8 +258,16 @@ export default function OrdersPage() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light' }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                      >
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: 'primary.light',
+                          }}
+                        >
                           {order.customerName.charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
@@ -267,9 +298,7 @@ export default function OrdersPage() {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        onClick={(e) => handleMenuOpen(e, order)}
-                      >
+                      <IconButton onClick={(e) => handleMenuOpen(e, order)}>
                         <MoreIcon />
                       </IconButton>
                     </TableCell>
@@ -300,18 +329,25 @@ export default function OrdersPage() {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={() => selectedOrder && handleOpenStatusDialog(selectedOrder)}>
+        <MenuItem
+          onClick={() => selectedOrder && handleOpenStatusDialog(selectedOrder)}
+        >
           <ShippingIcon sx={{ mr: 1.5 }} fontSize="small" />
           Update Status
         </MenuItem>
-        <MenuItem onClick={() => selectedOrder && handleWhatsAppContact(selectedOrder)}>
+        <MenuItem
+          onClick={() => selectedOrder && handleWhatsAppContact(selectedOrder)}
+        >
           <WhatsAppIcon sx={{ mr: 1.5 }} fontSize="small" color="success" />
           Contact via WhatsApp
         </MenuItem>
       </Menu>
 
       {/* Status Update Dialog */}
-      <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)}>
+      <Dialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+      >
         <DialogTitle>Update Order Status</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>

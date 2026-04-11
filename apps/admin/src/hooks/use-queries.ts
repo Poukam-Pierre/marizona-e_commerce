@@ -1,14 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import type {
+  BulkUpdateSettingsDto,
   CreateCategoryDto,
-  UpdateCategoryDto,
   CreateProductDto,
-  UpdateProductDto,
-  CreateOrderDto,
-  UpdateOrderDto,
+  CreateSettingDto,
   QueryParams,
+  UpdateCategoryDto,
+  UpdateOrderDto,
+  UpdateProductDto,
 } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Query Keys
 export const queryKeys = {
@@ -25,6 +26,10 @@ export const queryKeys = {
   orders: (params?: QueryParams & { status?: string }) =>
     ['orders', params] as const,
   order: (id: string) => ['orders', id] as const,
+  settings: ['settings'] as const,
+  setting: (key: string) => ['settings', key] as const,
+  settingsByCategory: (category: string) =>
+    ['settings', 'category', category] as const,
 };
 
 // Health Check Hook
@@ -219,5 +224,75 @@ export function useSendPushNotification() {
   return useMutation({
     mutationFn: ({ title, body }: { title: string; body: string }) =>
       api.sendPushNotification(title, body),
+  });
+}
+
+// Settings Hooks
+export function useSettingsByCategory(category: string) {
+  return useQuery({
+    queryKey: queryKeys.settingsByCategory(category),
+    queryFn: () => api.getSettingsByCategory(category),
+    enabled: !!category,
+  });
+}
+
+export function useSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings,
+    queryFn: () => api.getSettings(),
+  });
+}
+
+export function useSetting(key: string) {
+  return useQuery({
+    queryKey: queryKeys.setting(key),
+    queryFn: () => api.getSetting(key),
+    enabled: !!key,
+  });
+}
+
+export function useUpsertSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateSettingDto) => api.upsertSetting(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+  });
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: BulkUpdateSettingsDto) => api.bulkUpdateSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+  });
+}
+
+export function useUpdateSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ key, value }: { key: string; value: any }) =>
+      api.updateSetting(key, value),
+    onSuccess: (_, { key }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+      queryClient.invalidateQueries({ queryKey: queryKeys.setting(key) });
+    },
+  });
+}
+
+export function useDeleteSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (key: string) => api.deleteSetting(key),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
   });
 }

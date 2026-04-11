@@ -17,7 +17,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
             retry: 1,
           },
         },
-      })
+      }),
   );
 
   const [mounted, setMounted] = useState(false);
@@ -29,12 +29,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     setDarkMode(savedTheme === 'dark');
   }, []);
 
-  const toggleTheme = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    localStorage.setItem('admin-theme', newMode ? 'dark' : 'light');
-  };
-
   if (!mounted) {
     return null;
   }
@@ -43,8 +37,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
         <CssBaseline />
-        <SnackbarProvider 
-          maxSnack={3} 
+        <SnackbarProvider
+          maxSnack={3}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
           {children}

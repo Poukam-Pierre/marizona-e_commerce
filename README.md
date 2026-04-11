@@ -1,4 +1,4 @@
-# ShopNx - Production-Ready E-Commerce Platform
+# ShopPk - Production-Ready E-Commerce Platform
 
 A full-stack e-commerce platform built with Nx monorepo, featuring Next.js storefront, admin panel, and NestJS API.
 
@@ -27,13 +27,13 @@ bun run docker:up
 - API Docs: http://localhost:3002/api/docs
 
 **Default Admin:**
-- Email: `superadmin@shopnx.com`
+- Email: `superadmin@shoppk.com`
 - Password: `admin123`
 
 ## 📁 Project Structure
 
 ```
-shopnx/
+shoppk/
 ├── apps/
 │   ├── storefront/     # Next.js 16 e-commerce storefront
 │   ├── admin/          # Next.js 16 admin dashboard (MUI)

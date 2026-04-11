@@ -1,13 +1,24 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
+import { CurrencyService } from '../../common/services/currency.service';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly currencyService: CurrencyService,
+  ) {}
 
-  async generateWhatsAppCheckoutLink(orderId: string): Promise<{ url: string; message: string }> {
+  async generateWhatsAppCheckoutLink(
+    orderId: string,
+  ): Promise<{ url: string; message: string }> {
     // Get order details
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -15,7 +26,13 @@ export class NotificationsService {
         items: {
           include: {
             product: {
-              select: { id: true, name: true, sku: true, ownerName: true, ownerWhatsapp: true },
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                ownerName: true,
+                ownerWhatsapp: true,
+              },
             },
           },
         },
@@ -28,45 +45,52 @@ export class NotificationsService {
 
     // Get WhatsApp number - prefer product owner's WhatsApp for direct contact
     const firstProduct = order.items[0]?.product;
-    const phoneNumber = firstProduct?.ownerWhatsapp || order.customerWhatsapp || order.customerPhone;
+    const phoneNumber =
+      firstProduct?.ownerWhatsapp ||
+      order.customerWhatsapp ||
+      order.customerPhone;
 
     if (!phoneNumber) {
-      throw new BadRequestException('No WhatsApp number available for this order');
+      throw new BadRequestException(
+        'No WhatsApp number available for this order',
+      );
     }
 
     // Format phone number (remove non-digits)
     const formattedPhone = phoneNumber.replace(/\D/g, '');
 
     // Build message
+    const { code } = await this.currencyService.getConfig();
+    const fmt = (price: number) => this.currencyService.format(price, code);
+
     const items = order.items
       .map((item) => {
-        const price = this.formatPrice(item.totalPrice);
-        return `- ${item.productName} x${item.quantity} = Rp ${price}`;
+        return `- ${item.productName} x${item.quantity} = ${fmt(item.totalPrice)}`;
       })
       .join('\n');
 
-    const message = `Halo, saya ingin memesan:
+    const message = `Hello, I would like to place an order:
 
 📄 *Order ID:* ${order.orderNumber}
 
-📦 *Item Pesanan:*
+📦 *Order Items:*
 ${items}
 
-💰 *Subtotal:* Rp ${this.formatPrice(order.subtotal)}
-🚚 *Ongkir:* Rp ${this.formatPrice(order.shippingCost)}
-💸 *Total:* Rp ${this.formatPrice(order.total)}
+💰 *Subtotal:* ${fmt(order.subtotal)}
+🚚 *Shipping:* ${fmt(order.shippingCost)}
+💰 *Total:* ${fmt(order.total)}
 
-👤 *Nama:* ${order.shippingName}
-📱 *Telepon:* ${order.shippingPhone}
-📍 *Alamat:*
+👤 *Name:* ${order.shippingName}
+📱 *Phone:* ${order.shippingPhone}
+📍 *Shipping Address:*
 ${order.shippingAddress}
 ${order.shippingCity}, ${order.shippingProvince}
 ${order.shippingPostalCode}
 ${order.shippingCountry}
 
-${order.customerNotes ? `📝 *Catatan:* ${order.customerNotes}` : ''}
+${order.customerNotes ? `📝 *Notes:* ${order.customerNotes}` : ''}
 
-Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
+Please confirm my order. Thank you! 🙏`;
 
     const encodedMessage = encodeURIComponent(message);
     const url = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
@@ -82,7 +106,9 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
     return { url, message };
   }
 
-  async generateOrderConfirmationMessage(orderId: string): Promise<{ message: string }> {
+  async generateOrderConfirmationMessage(
+    orderId: string,
+  ): Promise<{ message: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -104,21 +130,24 @@ Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
       .map((item) => `- ${item.productName} x${item.quantity}`)
       .join('\n');
 
-    const message = `✅ *Pesanan Dikonfirmasi!*
+    const { code } = await this.currencyService.getConfig();
+    const message = `✅ *Order Confirmed!*
 
 📄 *Order ID:* ${order.orderNumber}
 
-📦 *Item:*
+📦 *Items:*
 ${items}
 
-💰 *Total:* Rp ${this.formatPrice(order.total)}
+💰 *Total:* ${this.currencyService.format(order.total, code)}
 
-Terima kasih telah berbelanja! 🙏`;
+Thank you for your purchase! 🙏`;
 
     return { message };
   }
 
-  async generateShippingNotification(orderId: string): Promise<{ message: string }> {
+  async generateShippingNotification(
+    orderId: string,
+  ): Promise<{ message: string }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -136,20 +165,18 @@ Terima kasih telah berbelanja! 🙏`;
       throw new BadRequestException('Order does not have tracking number yet');
     }
 
-    const message = `🚚 *Pesanan Dikirim!*
+    const message = `🚚 *Order Shipped!*
 
 📄 *Order ID:* ${order.orderNumber}
-📦 *Kurir:* ${order.shippingProvider || 'N/A'}
-🔖 *No. Resi:* ${order.trackingNumber}
+📦 *Carrier:* ${order.shippingProvider || 'N/A'}
+🔖 *Tracking Number:* ${order.trackingNumber}
 
-Lacak pengiriman Anda untuk melihat status terbaru.
+Track your shipment for the latest status.
 
-Terima kasih! 🙏`;
+Thank you! 🙏`;
 
     return { message };
   }
 
-  private formatPrice(price: number): string {
-    return price.toLocaleString('id-ID');
-  }
+
 }

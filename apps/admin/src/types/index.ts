@@ -29,10 +29,10 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
-  imageUrl: string | null;
+  image: string | null;
   parentId: string | null;
   isActive: boolean;
-  sortOrder: number;
+  order: number;
   createdAt: string;
   updatedAt: string;
   parent?: Category;
@@ -47,10 +47,10 @@ export interface CreateCategoryDto {
   name: string;
   slug?: string;
   description?: string;
-  imageUrl?: string;
+  image?: string;
   parentId?: string;
   isActive?: boolean;
-  sortOrder?: number;
+  order?: number;
 }
 
 export type UpdateCategoryDto = Partial<CreateCategoryDto>;
@@ -119,10 +119,33 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   category?: Category;
-  images?: ProductImage[];
+  images: ProductImage[];
   variants?: ProductVariant[];
 }
 
+export interface IVariant {
+  sku: string;
+  name: string;
+  option1Name?: string;
+  option1Value?: string;
+  option2Name?: string;
+  option2Value?: string;
+  option3Name?: string;
+  option3Value?: string;
+  price: number;
+  comparePrice?: number;
+  inventoryQuantity: number;
+  weight?: number;
+  image: string;
+  isActive?: boolean;
+}
+
+export interface IImage {
+  url: string;
+  alt?: string;
+  isPrimary: boolean;
+  order?: number;
+}
 export interface CreateProductDto {
   sku: string;
   name: string;
@@ -147,7 +170,8 @@ export interface CreateProductDto {
   isActive?: boolean;
   isFeatured?: boolean;
   isBestSeller?: boolean;
-  images?: { url: string; alt?: string; isPrimary?: boolean }[];
+  images: IImage[];
+  variants?: IVariant[];
 }
 
 export type UpdateProductDto = Partial<CreateProductDto>;
@@ -280,4 +304,34 @@ export interface HealthCheckResponse {
       message?: string;
     };
   };
+}
+
+// Settings Types
+export interface Setting {
+  id: string;
+  key: string;
+  value: any;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SettingsGroup {
+  [category: string]: {
+    [key: string]: any;
+  };
+}
+
+export interface CreateSettingDto {
+  key: string;
+  value: any;
+  category?: string;
+}
+
+export interface UpdateSettingDto {
+  value: any;
+}
+
+export interface BulkUpdateSettingsDto {
+  settings: CreateSettingDto[];
 }

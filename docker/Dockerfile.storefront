@@ -1,5 +1,5 @@
 # ============================================================================
-# ShopNx Storefront - Production Dockerfile
+# ShopPk Storefront - Production Dockerfile
 # Multi-stage build for Next.js with standalone output and Bun
 # ============================================================================
 

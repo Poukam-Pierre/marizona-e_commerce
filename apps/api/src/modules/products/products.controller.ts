@@ -56,6 +56,16 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @Public()
+  @Post(':id/rate')
+  @ApiOperation({ summary: 'Rate a product (public, verified buyers)' })
+  @ApiParam({ name: 'id', description: 'Product ID' })
+  @ApiResponse({ status: 200, description: 'Rating saved' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  rate(@Param('id') id: string, @Body('rating') rating: number) {
+    return this.productsService.rate(id, rating);
+  }
+
   @ApiBearerAuth()
   @Post()
   @Roles(AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.MANAGER)

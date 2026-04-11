@@ -12,6 +12,8 @@ export interface Product {
   inventoryTracked: boolean;
   lowStockThreshold: number;
   downloadUrl: string | null;
+  downloadLimit: number | null;
+  downloadExpiry: string | null;
   ownerName: string | null;
   ownerWhatsapp: string | null;
   categoryId: string | null;
@@ -46,6 +48,10 @@ export interface Product {
     option1Value: string | null;
     option2Name: string | null;
     option2Value: string | null;
+    option3Name: string | null;
+    option3Value: string | null;
+    weight: number | null;
+    image: string | null;
     isActive: boolean;
   }>;
 }
@@ -173,7 +179,7 @@ export interface CreateOrderDto {
   shippingAddress: string;
   shippingCity: string;
   shippingProvince: string;
-  shippingPostalCode: string;
+  shippingPostalCode?: string;
   shippingCountry?: string;
   items: Array<{
     productId: string;
@@ -181,6 +187,7 @@ export interface CreateOrderDto {
     quantity: number;
   }>;
   customerNotes?: string;
+  shippingCost?: number;
 }
 
 // Cart Types

@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -11,6 +7,11 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
+import { PushNotificationService } from './push-notification.service';
+import {
+  CreatePushSubscriptionDto,
+  DeletePushSubscriptionDto,
+} from './dto/push-subscription.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AdminRole } from '@prisma/client';
@@ -18,7 +19,10 @@ import { AdminRole } from '@prisma/client';
 @ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly pushService: PushNotificationService,
+  ) {}
 
   @Public()
   @Get('whatsapp/:orderId')
@@ -51,5 +55,34 @@ export class NotificationsController {
   @ApiResponse({ status: 400, description: 'No tracking number' })
   generateShippingNotification(@Param('orderId') orderId: string) {
     return this.notificationsService.generateShippingNotification(orderId);
+  }
+
+  // Push Notification Endpoints
+
+  @Public()
+  @Get('push/vapid-key')
+  @ApiOperation({
+    summary: 'Get public VAPID key for push subscriptions (public)',
+  })
+  @ApiResponse({ status: 200, description: 'VAPID public key' })
+  getVapidKey() {
+    return { publicKey: this.pushService.getPublicVapidKey() };
+  }
+
+  @Public()
+  @Post('push/subscribe')
+  @ApiOperation({ summary: 'Subscribe to push notifications (public)' })
+  @ApiResponse({ status: 201, description: 'Subscription created' })
+  @ApiResponse({ status: 400, description: 'Invalid subscription data' })
+  subscribeToPush(@Body() dto: CreatePushSubscriptionDto) {
+    return this.pushService.subscribe(dto);
+  }
+
+  @Public()
+  @Delete('push/unsubscribe')
+  @ApiOperation({ summary: 'Unsubscribe from push notifications (public)' })
+  @ApiResponse({ status: 200, description: 'Successfully unsubscribed' })
+  unsubscribeFromPush(@Body() dto: DeletePushSubscriptionDto) {
+    return this.pushService.unsubscribe(dto);
   }
 }

@@ -8,29 +8,146 @@ import {
   MaxLength,
   Min,
   IsUrl,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductType } from '@prisma/client';
 import { Type } from 'class-transformer';
+
+class ProductImageDto {
+  @ApiPropertyOptional({
+    description: 'Existing image ID — include to update, omit to create',
+  })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsUrl()
+  url!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  alt?: string;
+
+  @ApiProperty()
+  @IsBoolean()
+  isPrimary!: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  order?: number;
+}
+
+class ProductVariantDto {
+  @ApiPropertyOptional({
+    description: 'Existing variant ID — include to update, omit to create',
+  })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  sku!: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
+  name!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option1Name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option1Value?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option2Name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option2Value?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option3Name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  option3Value?: string;
+
+  @ApiProperty()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  price!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  comparePrice?: number;
+
+  @ApiProperty()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  inventoryQuantity!: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  weight?: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsUrl()
+  image!: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
 
 export class CreateProductDto {
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  sku: string;
+  sku!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  name: string;
+  name!: string;
 
   @ApiProperty()
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  slug: string;
+  slug!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -39,15 +156,14 @@ export class CreateProductDto {
   description?: string;
 
   @ApiProperty({ enum: ProductType, default: 'PHYSICAL' })
-  @IsOptional()
   @IsEnum(ProductType)
-  type?: ProductType;
+  type: ProductType = ProductType.PHYSICAL;
 
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  price: number;
+  price!: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -64,11 +180,10 @@ export class CreateProductDto {
   costPrice?: number;
 
   @ApiProperty({ default: 0 })
-  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  inventoryQuantity?: number;
+  inventoryQuantity!: number;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -135,21 +250,14 @@ export class CreateProductDto {
   @MaxLength(255)
   ownerName?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
   @MaxLength(50)
-  ownerWhatsapp?: string;
+  ownerWhatsapp!: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  categoryId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsUrl()
-  image?: string;
+  categoryId!: string;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
@@ -160,6 +268,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isBestSeller?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -172,4 +285,18 @@ export class CreateProductDto {
   @IsString()
   @MaxLength(500)
   metaDescription?: string;
+
+  @ApiProperty({ type: [ProductImageDto] })
+  @IsArray()
+  @MinLength(1)
+  @ValidateNested({ each: true })
+  @Type(() => ProductImageDto)
+  images!: ProductImageDto[];
+
+  @ApiPropertyOptional({ type: [ProductVariantDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantDto)
+  variants?: ProductVariantDto[];
 }

@@ -16,8 +16,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
-  const primaryImage = product.images.find((img) => img.isPrimary)?.url || product.image;
-  const hasDiscount = product.comparePrice && product.comparePrice > product.price;
+  const primaryImage =
+    product.image || product.images.find((img) => img.isPrimary)?.url;
+  const hasDiscount =
+    product.comparePrice && product.comparePrice > product.price;
   const discountPercent = hasDiscount
     ? Math.round(((product.comparePrice! - product.price) / product.comparePrice!) * 100)
     : 0;
@@ -94,11 +96,11 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* Price */}
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-primary">
-              Rp {product.price.toLocaleString('id-ID')}
+              FCFA {product.price.toLocaleString('id-ID')}
             </span>
             {hasDiscount && (
               <span className="text-sm text-muted-foreground line-through">
-                Rp {product.comparePrice!.toLocaleString('id-ID')}
+                FCFA {product.comparePrice!.toLocaleString('id-ID')}
               </span>
             )}
           </div>
