@@ -33,7 +33,7 @@ class ProductImageDto {
   @IsString()
   alt?: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsBoolean()
   isPrimary!: boolean;
 
@@ -288,6 +288,7 @@ export class CreateProductDto {
 
   @ApiProperty({ type: [ProductImageDto] })
   @IsArray()
+  @MinLength(1)
   @ValidateNested({ each: true })
   @Type(() => ProductImageDto)
   images!: ProductImageDto[];

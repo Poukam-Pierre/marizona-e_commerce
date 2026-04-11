@@ -106,28 +106,27 @@ export class SettingsService {
   }
 
   async bulkUpsert(dto: BulkUpdateSettingDto) {
-    const results = [];
+    const results = await this.prisma.$transaction(
+      dto.settings.map((setting) => {
+        const valueStr =
+          typeof setting.value === 'string'
+            ? setting.value
+            : JSON.stringify(setting.value);
 
-    for (const setting of dto.settings) {
-      const valueStr =
-        typeof setting.value === 'string'
-          ? setting.value
-          : JSON.stringify(setting.value);
-
-      const result = await this.prisma.setting.upsert({
-        where: { key: setting.key },
-        update: {
-          value: valueStr,
-          category: setting.category || 'general',
-        },
-        create: {
-          key: setting.key,
-          value: valueStr,
-          category: setting.category || 'general',
-        },
-      });
-      results.push(result);
-    }
+        return this.prisma.setting.upsert({
+          where: { key: setting.key },
+          update: {
+            value: valueStr,
+            category: setting.category || 'general',
+          },
+          create: {
+            key: setting.key,
+            value: valueStr,
+            category: setting.category || 'general',
+          },
+        });
+      }),
+    );
 
     this.logger.log(`Bulk updated ${results.length} settings`);
 
