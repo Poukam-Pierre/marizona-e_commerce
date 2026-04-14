@@ -7,6 +7,16 @@ export interface CurrencyConfig {
   symbol: string;
 }
 
+/** Safely parse a setting value that may be JSON-encoded ("XAF") or plain (XAF). */
+function parseSettingString(value: string, fallback: string): string {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return typeof parsed === 'string' ? parsed : fallback;
+  } catch {
+    return value || fallback;
+  }
+}
+
 /**
  * Centralised currency service.
  *
@@ -42,11 +52,11 @@ export class CurrencyService {
     ]);
 
     const code: string = codeSetting
-      ? (JSON.parse(codeSetting.value) as string)
+      ? parseSettingString(codeSetting.value, Currency.XAF)
       : Currency.XAF;
 
     const symbol: string = symbolSetting
-      ? (JSON.parse(symbolSetting.value) as string)
+      ? parseSettingString(symbolSetting.value, CURRENCY_SYMBOLS[code] ?? code)
       : (CURRENCY_SYMBOLS[code] ?? code);
 
     this.cache = { code, symbol, cachedAt: now };
