@@ -1,11 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Sun, Moon, Home, Package, User } from 'lucide-react';
-import { useState } from 'react';
-import { useTheme } from 'next-themes';
-import { useCart } from '@/providers/cart-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,19 +10,46 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/providers/cart-provider';
+import {
+  Home,
+  MapPin,
+  Menu,
+  Moon,
+  Package,
+  Search,
+  ShoppingCart,
+  Sun,
+  X,
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Products', href: '/products', icon: Package },
+  { name: 'Track Order', href: '/orders/track', icon: MapPin },
 ];
 
 export function Header() {
-  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { totalItems, totalPrice } = useCart();
+  const pathname = usePathname();
+  const { totalItems, isMounted } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // pathname is '' on the server AND on the first synchronous client render,
+  // so both produce identical HTML. After mount, window.location.pathname gives
+  // the real path, triggering a re-render with the correct active state.
+  // This completely avoids the usePathname() SSR/hydration mismatch.
+  const [_, setActivePath] = useState('');
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => {
+    setActivePath(window.location.pathname);
+    setThemeMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,22 +99,29 @@ export function Header() {
               )}
             </Button>
 
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            {/* Theme Toggle - Only show interactive version after mount */}
+            {themeMounted ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" disabled>
+                <Sun className="h-5 w-5" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            )}
 
-            {/* Cart */}
+            {/* Cart - Only show badge after cart is loaded */}
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
+                {isMounted && totalItems > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
@@ -100,6 +129,18 @@ export function Header() {
                     {totalItems}
                   </Badge>
                 )}
+              </Button>
+            </Link>
+
+            {/* Track Order */}
+            <Link href="/orders/track">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Track Order"
+                className={pathname === '/orders/track' ? 'text-primary' : ''}
+              >
+                <MapPin className="h-5 w-5" />
               </Button>
             </Link>
 

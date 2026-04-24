@@ -5,6 +5,7 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useState,
   type ReactNode,
 } from 'react';
 import type { CartItem, Product } from '@/types';
@@ -18,13 +19,19 @@ interface CartState {
 type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: { productId: string; variantId?: string } }
-  | { type: 'UPDATE_QUANTITY'; payload: { productId: string; variantId?: string; quantity: number } }
+  | {
+      type: 'UPDATE_QUANTITY';
+      payload: { productId: string; variantId?: string; quantity: number };
+    }
   | { type: 'CLEAR_CART' }
   | { type: 'LOAD_CART'; payload: CartItem[] };
 
 const CART_STORAGE_KEY = 'shoppk_cart';
 
-function calculateTotals(items: CartItem[]): { totalItems: number; totalPrice: number } {
+function calculateTotals(items: CartItem[]): {
+  totalItems: number;
+  totalPrice: number;
+} {
   return items.reduce(
     (acc, item) => ({
       totalItems: acc.totalItems + item.quantity,
@@ -107,10 +114,20 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 interface CartContextType extends CartState {
-  addItem: (product: Product, quantity: number, variantId?: string, variantName?: string) => void;
+  addItem: (
+    product: Product,
+    quantity: number,
+    variantId?: string,
+    variantName?: string,
+  ) => void;
   removeItem: (productId: string, variantId?: string) => void;
-  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
+  updateQuantity: (
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ) => void;
   clearCart: () => void;
+  isMounted: boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -122,6 +139,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     totalPrice: 0,
   });
 
+  const [isMounted, setIsMounted] = useState(false);
+
   // Load cart from localStorage on mount
   useEffect(() => {
     try {
@@ -132,17 +151,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to load cart from localStorage:', error);
+    } finally {
+      setIsMounted(true);
     }
   }, []);
 
   // Save cart to localStorage on change
   useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
-    } catch (error) {
-      console.error('Failed to save cart to localStorage:', error);
+    if (isMounted) {
+      // Only save after initial load
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
+      } catch (error) {
+        console.error('Failed to save cart to localStorage:', error);
+      }
     }
-  }, [state.items]);
+  }, [state.items, isMounted]);
 
   const addItem = (
     product: Product,
@@ -199,6 +223,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeItem,
         updateQuantity,
         clearCart,
+        isMounted,
       }}
     >
       {children}
