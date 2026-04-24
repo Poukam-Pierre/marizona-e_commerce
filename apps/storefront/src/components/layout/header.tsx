@@ -132,18 +132,6 @@ export function Header() {
               </Button>
             </Link>
 
-            {/* Track Order */}
-            <Link href="/orders/track">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Track Order"
-                className={pathname === '/orders/track' ? 'text-primary' : ''}
-              >
-                <MapPin className="h-5 w-5" />
-              </Button>
-            </Link>
-
             {/* Mobile Menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
