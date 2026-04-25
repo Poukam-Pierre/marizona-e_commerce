@@ -183,19 +183,53 @@ export type OrderStatus =
   | 'PROCESSING'
   | 'SHIPPED'
   | 'DELIVERED'
+  | 'COMPLETED'
   | 'CANCELLED'
   | 'REFUNDED';
+
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'PARTIAL';
+
+/** Forward-only state machine — mirrors backend ALLOWED_TRANSITIONS */
+export const ORDER_ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING:    ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED:  ['PROCESSING', 'COMPLETED', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'CANCELLED'],
+  SHIPPED:    ['DELIVERED'],
+  DELIVERED:  ['COMPLETED', 'REFUNDED'],
+  COMPLETED:  ['REFUNDED'],
+  CANCELLED:  [],
+  REFUNDED:   [],
+};
 
 export interface OrderItem {
   id: string;
   productId: string;
   product: Product;
+  productType: 'PHYSICAL' | 'DIGITAL';
   variantId?: string;
   variant?: ProductVariant;
   quantity: number;
   price: number;
   total: number;
 }
+
+/** Transitions for orders where every item is DIGITAL — skips physical-only steps */
+export const DIGITAL_ORDER_ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING:    ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED:  ['COMPLETED', 'CANCELLED'],
+  PROCESSING: ['COMPLETED', 'CANCELLED'],
+  SHIPPED:    ['COMPLETED'],
+  DELIVERED:  ['COMPLETED', 'REFUNDED'],
+  COMPLETED:  ['REFUNDED'],
+  CANCELLED:  [],
+  REFUNDED:   [],
+};
 
 export interface Order {
   id: string;
@@ -205,7 +239,7 @@ export interface Order {
   customerPhone: string;
   customerWhatsapp?: string;
   status: OrderStatus;
-  subtotal: number;
+  paymentStatus: PaymentStatus;
   shippingCost: number;
   tax: number;
   total: number;
@@ -234,6 +268,7 @@ export interface CreateOrderDto {
 
 export interface UpdateOrderDto {
   status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
   notes?: string;
 }
 
