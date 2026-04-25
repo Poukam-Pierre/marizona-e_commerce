@@ -208,9 +208,9 @@ export function useUpdateOrder() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateOrderDto }) =>
       api.updateOrder(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.order(id) });
+    onSuccess: () => {
+      // Use the base key ['orders'] so ALL order queries (any params) are invalidated
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.recentOrders,
