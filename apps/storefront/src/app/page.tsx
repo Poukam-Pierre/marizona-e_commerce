@@ -9,6 +9,8 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  Grid,
+  List,
 } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/use-api';
 import { ProductCard } from '@/components/product/product-card';
@@ -31,6 +33,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -58,6 +61,7 @@ function HomeContent() {
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder);
   const [limit] = useState(initialLimit);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Queries
   const { data, isLoading, error } = useProducts({
@@ -178,7 +182,7 @@ function HomeContent() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-6 items-start md:items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Filter Sheet (Mobile) */}
             <Sheet>
@@ -237,6 +241,38 @@ function HomeContent() {
                         <SelectItem value="all">All Types</SelectItem>
                         <SelectItem value="PHYSICAL">Physical</SelectItem>
                         <SelectItem value="DIGITAL">Digital</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  {/* Sort */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Sort by</label>
+                    <Select value={sortBy} onValueChange={(v) => handleFilterChange('sortBy', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt">Newest</SelectItem>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="price">Price</SelectItem>
+                        <SelectItem value="soldCount">Best Sellers</SelectItem>
+                        <SelectItem value="rating">Top Rated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Order</label>
+                    <Select value={sortOrder} onValueChange={(v) => handleFilterChange('sortOrder', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">Descending</SelectItem>
+                        <SelectItem value="asc">Ascending</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -329,6 +365,25 @@ function HomeContent() {
               )}
             </div>
           </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">View:</span>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Active Filters */}
@@ -373,7 +428,7 @@ function HomeContent() {
 
         {/* Product Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className={`grid gap-4 md:gap-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
             {Array.from({ length: limit }).map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -398,7 +453,7 @@ function HomeContent() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className={`grid gap-4 md:gap-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
               {data?.data.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
