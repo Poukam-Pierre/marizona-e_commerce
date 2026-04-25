@@ -366,8 +366,8 @@ function HomeContent() {
             </div>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-2">
+          {/* View Mode Toggle — mobile only */}
+          <div className="flex md:hidden items-center gap-2">
             <span className="text-sm text-muted-foreground">View:</span>
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
