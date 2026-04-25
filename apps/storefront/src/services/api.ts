@@ -88,14 +88,16 @@ export const api = {
 
   // Orders
   async createOrder(data: import('@/types').CreateOrderDto) {
-    return apiFetch<import('@/types').Order>(API_ENDPOINTS.orders, {
+    return apiFetch<import('@/types').OrderCreatedResponse>(API_ENDPOINTS.orders, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  async getOrder(id: string) {
-    return apiFetch<import('@/types').Order>(API_ENDPOINTS.order(id));
+  async getOrder(id: string, token: string) {
+    return apiFetch<import('@/types').Order>(
+      `${API_ENDPOINTS.order(id)}?token=${encodeURIComponent(token)}`,
+    );
   },
 
   // WhatsApp
