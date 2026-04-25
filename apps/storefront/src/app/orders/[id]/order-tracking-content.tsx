@@ -273,12 +273,39 @@ function DigitalDownloadCard({
 function useCopyToClipboard() {
   const [copied, setCopied] = useState(false);
   const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    let success = false;
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        success = true;
+      } catch {
+        // blocked (HTTP / permissions) — fall through
+      }
+    }
+
+    if (!success) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        success = true;
+      } catch {
+        // execCommand also failed
+      }
+    }
+
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Could not copy to clipboard');
+    } else {
+      toast.error('Could not copy — please copy the link manually.');
     }
   };
   return { copied, copy };
