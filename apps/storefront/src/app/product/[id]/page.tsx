@@ -160,14 +160,44 @@ export default function ProductDetailPage() {
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({
-        title: product.name,
-        text: product.description || '',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.description || '',
+          url: window.location.href,
+        });
+        // return;
+      } catch {
+        // user cancelled or share unavailable — fall through
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+        return;
+      } catch {
+        // clipboard blocked (HTTP / permissions) — fall through
+      }
+    }
+
+    // Final fallback: execCommand (works on HTTP)
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = window.location.href;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
       toast.success('Link copied to clipboard');
+    } catch {
+      toast.error(
+        'Could not copy link. Please copy it manually from the address bar.',
+      );
     }
   };
 
