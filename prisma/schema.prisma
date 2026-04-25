@@ -417,6 +417,12 @@ model Order {
   confirmedAt DateTime?
   cancelledAt DateTime?
   refundedAt  DateTime?
+  completedAt DateTime?
+
+  /// Secure public order lookup — only SHA-256 hash of raw token is persisted
+  lookupToken        String?   @unique
+  lookupTokenExpiry  DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -426,6 +432,7 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([lookupToken])
   @@map("orders")
 }
 
