@@ -110,6 +110,12 @@ export function VariantBuilder({
       inventoryQuantity: 0,
       weight: undefined,
       isActive: true,
+      option1Name: '',
+      option1Value: '',
+      option2Name: '',
+      option2Value: '',
+      option3Name: '',
+      option3Value: '',
     },
     validationSchema: variantValidationSchema,
     enableReinitialize: true,
@@ -539,6 +545,45 @@ export function VariantBuilder({
                 variantFormik.touched.image && variantFormik.errors.image
               }
             />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              Options — used to display selection buttons on the storefront (e.g. Option&nbsp;Name:&nbsp;Couleur, Value:&nbsp;Bleu)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Option 1 Name"
+                name="option1Name"
+                value={variantFormik.values.option1Name || ''}
+                onChange={variantFormik.handleChange}
+                placeholder="e.g. Couleur"
+              />
+              <TextField
+                fullWidth
+                label="Option 1 Value"
+                name="option1Value"
+                value={variantFormik.values.option1Value || ''}
+                onChange={variantFormik.handleChange}
+                placeholder="e.g. Rouge"
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Option 2 Name"
+                name="option2Name"
+                value={variantFormik.values.option2Name || ''}
+                onChange={variantFormik.handleChange}
+                placeholder="e.g. Taille"
+              />
+              <TextField
+                fullWidth
+                label="Option 2 Value"
+                name="option2Value"
+                value={variantFormik.values.option2Value || ''}
+                onChange={variantFormik.handleChange}
+                placeholder="e.g. M"
+              />
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
