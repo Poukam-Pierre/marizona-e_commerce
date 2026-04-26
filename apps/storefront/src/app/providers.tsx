@@ -31,9 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <CartProvider>
-            <ProductNotificationsProvider>
-              {children}
-            </ProductNotificationsProvider>
+          <ProductNotificationsProvider>
+            {children}
+          </ProductNotificationsProvider>
           <Toaster position="top-center" />
         </CartProvider>
       </ThemeProvider>
