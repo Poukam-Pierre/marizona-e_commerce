@@ -2,10 +2,7 @@
 
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { VariantBuilder } from '@/components/products/variant-builder';
-import {
-  useCategories,
-  useCreateProduct,
-} from '@/hooks/use-queries';
+import { useCategories, useCreateProduct } from '@/hooks/use-queries';
 import type { CreateProductDto } from '@/types';
 import {
   Add as AddIcon,
@@ -172,8 +169,10 @@ export default function NewProductPage() {
   }, [formik.values.name, formik.values.slug]);
 
   const handleAddImage = () => {
-    if (newImageUrl && !imageUrls.includes(newImageUrl)) {
-      const updatedUrls = [...imageUrls, newImageUrl];
+    // Normalize URL: collapse double slashes in path (but not in the protocol https://)
+    const normalizedUrl = newImageUrl.trim().replace(/([^:])\/{2,}/g, '$1/');
+    if (normalizedUrl && !imageUrls.includes(normalizedUrl)) {
+      const updatedUrls = [...imageUrls, normalizedUrl];
       setImageUrls(updatedUrls);
       // Sync with Formik for validation
       formik.setFieldValue(
@@ -322,6 +321,7 @@ export default function NewProductPage() {
                     label="Image URL"
                     value={newImageUrl}
                     onChange={(e) => setNewImageUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddImage()}
                     placeholder="https://example.com/image.jpg"
                     disabled={createProduct.isPending}
                   />
