@@ -5,7 +5,6 @@ import { VariantBuilder } from '@/components/products/variant-builder';
 import {
   useCategories,
   useCreateProduct,
-  useSendPushNotification,
 } from '@/hooks/use-queries';
 import type { CreateProductDto } from '@/types';
 import {
@@ -104,7 +103,6 @@ export default function NewProductPage() {
 
   const { data: categories = [] } = useCategories();
   const createProduct = useCreateProduct();
-  const sendNotification = useSendPushNotification();
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -148,18 +146,6 @@ export default function NewProductPage() {
         };
 
         await createProduct.mutateAsync(productData);
-
-        // Send notification for new product
-        try {
-          await sendNotification.mutateAsync({
-            title: 'New Product Added!',
-            body: `${values.name} is now available for FCFA${values.price}`,
-          });
-        } catch {
-          enqueueSnackbar('Product created but failed to send notification', {
-            variant: 'warning',
-          });
-        }
 
         enqueueSnackbar('Product created successfully!', {
           variant: 'success',

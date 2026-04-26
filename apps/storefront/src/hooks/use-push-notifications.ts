@@ -115,7 +115,7 @@ export function usePushNotifications(
     try {
       // Get VAPID public key from backend
       const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
       const vapidResponse = await fetch(
         `${apiUrl}/notifications/push/vapid-key`,
       );
@@ -191,7 +191,7 @@ export function usePushNotifications(
 
       // Notify backend
       const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
       await fetch(`${apiUrl}/notifications/push/unsubscribe`, {
         method: 'DELETE',
         headers: {

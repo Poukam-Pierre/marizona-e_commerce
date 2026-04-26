@@ -3,6 +3,20 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+/**
+ * Derive the Socket.io server base URL from NEXT_PUBLIC_API_URL.
+ * The API URL includes "/api/v1", but the socket server lives at the root host.
+ * Falls back to the API port (3002) for local development.
+ */
+function getSocketBaseUrl(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (apiUrl) {
+    // Strip trailing /api/v1 or /api to get the bare origin
+    return apiUrl.replace(/\/api(\/v\d+)?\/?$/, '');
+  }
+  return 'http://localhost:3002';
+}
+
 export interface ProductNotification {
   type: 'product.created';
   product: {
@@ -55,9 +69,10 @@ export function useProductNotifications(
   useEffect(() => {
     if (!autoConnect) return;
 
-    // Connect to WebSocket server
-    // Use the proxy path that Caddy will route to the API server
-    const socketInstance = io('/notifications', {
+    // Connect to WebSocket server using an absolute URL so the socket
+    // reaches the API server (port 3002) directly, regardless of the proxy
+    // in front of the storefront (port 3000).
+    const socketInstance = io(`${getSocketBaseUrl()}/notifications`, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -141,7 +156,7 @@ export function useProductNotifications(
 
   const connect = useCallback(() => {
     if (!socket) {
-      const socketInstance = io('/notifications', {
+      const socketInstance = io(`${getSocketBaseUrl()}/notifications`, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
