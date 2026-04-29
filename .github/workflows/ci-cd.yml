@@ -265,13 +265,32 @@ jobs:
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     environment:
       name: production
-      url: https://shoppk.com
+      url: https://www.shoppk.com
     steps:
-      - name: Deploy to production
-        run: |
-          echo "Deploying to production environment..."
-          # Add your deployment commands here
-          # Examples:
-          # - kubectl apply -f k8s/production/
-          # - helm upgrade --install shoppk ./helm -f helm/values-production.yaml
-          # - aws ecs update-service --cluster production --service shoppk --force-new-deployment
+      - name: Deploy API to OCI Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ubuntu
+          key: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/${{ github.repository_owner }}/shoppk/api:latest
+            docker stop shoppk-api 2>/dev/null || true
+            docker rm shoppk-api 2>/dev/null || true
+            docker run -d \
+              --name shoppk-api \
+              --restart unless-stopped \
+              --network host \
+              -e DATABASE_URL="${{ secrets.SUPABASE_DATABASE_URL }}" \
+              -e REDIS_URL="redis://localhost:6379" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
+              ghcr.io/${{ github.repository_owner }}/shoppk/api:latest
+
+      - name: Trigger Vercel Storefront Deploy
+        run: curl -X POST "${{ secrets.VERCEL_STOREFRONT_DEPLOY_HOOK }}"
+
+      - name: Trigger Vercel Admin Deploy
+        run: curl -X POST "${{ secrets.VERCEL_ADMIN_DEPLOY_HOOK }}"
