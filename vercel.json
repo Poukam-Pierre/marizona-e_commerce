@@ -1,6 +1,0 @@
-{
-  "packageManager": "bun@latest",
-  "root": "apps/storefront",
-  "buildCommand": "bun run build:storefront",
-  "outputDirectory": ".next"
-}
