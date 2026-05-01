@@ -1,0 +1,5 @@
+{
+  "packageManager": "bun@latest",
+  "buildCommand": "bun run build:admin",
+  "outputDirectory": ".next"
+}
