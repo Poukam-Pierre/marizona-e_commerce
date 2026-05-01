@@ -1,6 +1,6 @@
 // ============================================================================
-// E-Commerce Platform - SQLite Development Schema
-// Database: SQLite (for local development/sandbox)
+// E-Commerce Platform - PostgreSQL Schema
+// Database: PostgreSQL (development and production)
 // Version: 1.0.0
 // ============================================================================
 
@@ -14,7 +14,7 @@ datasource db {
 }
 
 // ============================================================================
-// ENUMS (SQLite uses strings instead of native enums)
+// ENUMS
 // ============================================================================
 
 /// Admin user roles with hierarchical permissions
