@@ -34,11 +34,13 @@ import {
   MoreVert as MoreIcon,
   WhatsApp as WhatsAppIcon,
   LocalShipping as ShippingIcon,
+  Payments as PaymentsIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { useOrders, useUpdateOrder } from '@/hooks/use-queries';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, PaymentStatus } from '@/types';
+import { ORDER_ALLOWED_TRANSITIONS, DIGITAL_ORDER_ALLOWED_TRANSITIONS } from '@/types';
 
 const statusColors: Record<
   OrderStatus,
@@ -49,6 +51,7 @@ const statusColors: Record<
   PROCESSING: 'primary',
   SHIPPED: 'secondary',
   DELIVERED: 'success',
+  COMPLETED: 'success',
   CANCELLED: 'error',
   REFUNDED: 'default',
 };
@@ -59,8 +62,30 @@ const statusLabels: Record<OrderStatus, string> = {
   PROCESSING: 'Processing',
   SHIPPED: 'Shipped',
   DELIVERED: 'Delivered',
+  COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
   REFUNDED: 'Refunded',
+};
+
+const paymentColors: Record<
+  PaymentStatus,
+  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
+> = {
+  PENDING:    'warning',
+  PROCESSING: 'info',
+  PAID:       'success',
+  FAILED:     'error',
+  REFUNDED:   'default',
+  PARTIAL:    'warning',
+};
+
+const paymentLabels: Record<PaymentStatus, string> = {
+  PENDING:    'Pending',
+  PROCESSING: 'Processing',
+  PAID:       'Paid',
+  FAILED:     'Failed',
+  REFUNDED:   'Refunded',
+  PARTIAL:    'Partial',
 };
 
 function TableSkeleton() {
@@ -103,6 +128,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<OrderStatus>('PENDING');
+  const [newPaymentStatus, setNewPaymentStatus] = useState<PaymentStatus>('PENDING');
 
   const { data, isLoading } = useOrders({
     page: page + 1,
@@ -129,26 +155,42 @@ export default function OrdersPage() {
   const handleOpenStatusDialog = (order: Order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
+    setNewPaymentStatus(order.paymentStatus);
     setStatusDialogOpen(true);
     handleMenuClose();
   };
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder) return;
-
+    const payload: { status?: OrderStatus; paymentStatus?: PaymentStatus } = {};
+    if (newStatus !== selectedOrder.status) payload.status = newStatus;
+    if (newPaymentStatus !== selectedOrder.paymentStatus) payload.paymentStatus = newPaymentStatus;
+    if (!payload.status && !payload.paymentStatus) {
+      setStatusDialogOpen(false);
+      return;
+    }
     try {
-      await updateOrder.mutateAsync({
-        id: selectedOrder.id,
-        data: { status: newStatus },
-      });
-      enqueueSnackbar('Order status updated', { variant: 'success' });
+      await updateOrder.mutateAsync({ id: selectedOrder.id, data: payload });
+      enqueueSnackbar('Order updated successfully', { variant: 'success' });
       setStatusDialogOpen(false);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred';
-      enqueueSnackbar(message, {
-        variant: 'error',
-      });
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      enqueueSnackbar(message, { variant: 'error' });
+    }
+  };
+
+  const handleConfirmPayment = async (order: Order) => {
+    handleMenuClose();
+    if (order.paymentStatus === 'PAID') {
+      enqueueSnackbar('Payment is already confirmed', { variant: 'info' });
+      return;
+    }
+    try {
+      await updateOrder.mutateAsync({ id: order.id, data: { paymentStatus: 'PAID' } });
+      enqueueSnackbar(`Payment confirmed for order #${order.orderNumber}`, { variant: 'success' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      enqueueSnackbar(message, { variant: 'error' });
     }
   };
 
@@ -228,7 +270,8 @@ export default function OrdersPage() {
                 <TableCell>Order</TableCell>
                 <TableCell>Customer</TableCell>
                 <TableCell>Total</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell>Order Status</TableCell>
+                <TableCell>Payment</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -238,7 +281,7 @@ export default function OrdersPage() {
                 <TableSkeleton />
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">
                       No orders found
                     </Typography>
@@ -293,6 +336,14 @@ export default function OrdersPage() {
                       />
                     </TableCell>
                     <TableCell>
+                      <Chip
+                        label={paymentLabels[order.paymentStatus as PaymentStatus] ?? order.paymentStatus}
+                        color={paymentColors[order.paymentStatus as PaymentStatus] ?? 'default'}
+                        size="small"
+                        variant={order.paymentStatus === 'PAID' ? 'filled' : 'outlined'}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2">
                         {formatDate(order.createdAt)}
                       </Typography>
@@ -336,6 +387,13 @@ export default function OrdersPage() {
           Update Status
         </MenuItem>
         <MenuItem
+          onClick={() => selectedOrder && handleConfirmPayment(selectedOrder)}
+          disabled={selectedOrder?.paymentStatus === 'PAID'}
+        >
+          <PaymentsIcon sx={{ mr: 1.5 }} fontSize="small" color={selectedOrder?.paymentStatus === 'PAID' ? 'disabled' : 'success'} />
+          {selectedOrder?.paymentStatus === 'PAID' ? 'Payment Confirmed ✓' : 'Confirm Payment'}
+        </MenuItem>
+        <MenuItem
           onClick={() => selectedOrder && handleWhatsAppContact(selectedOrder)}
         >
           <WhatsAppIcon sx={{ mr: 1.5 }} fontSize="small" color="success" />
@@ -350,17 +408,60 @@ export default function OrdersPage() {
       >
         <DialogTitle>Update Order Status</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {selectedOrder?.items.every((i) => i.productType === 'DIGITAL') && (
+              <Typography variant="caption" color="info.main">
+                Digital order — shipping steps are not applicable.
+              </Typography>
+            )}
             <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
+              <InputLabel>Order Status</InputLabel>
               <Select
                 value={newStatus}
-                label="Status"
+                label="Order Status"
                 onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
               >
-                {Object.entries(statusLabels).map(([value, label]) => (
+                {selectedOrder && (() => {
+                  const isDigital = selectedOrder.items.every((i) => i.productType === 'DIGITAL');
+                  const transitions = isDigital
+                    ? DIGITAL_ORDER_ALLOWED_TRANSITIONS[selectedOrder.status]
+                    : ORDER_ALLOWED_TRANSITIONS[selectedOrder.status];
+                  return transitions.map((value) => (
+                    <MenuItem key={value} value={value}>
+                      {statusLabels[value]}
+                    </MenuItem>
+                  ));
+                })()}
+                {/* Always keep the current status selectable */}
+                {selectedOrder && (
+                  <MenuItem value={selectedOrder.status}>
+                    {statusLabels[selectedOrder.status]} (current)
+                  </MenuItem>
+                )}
+                {selectedOrder && (() => {
+                  const isDigital = selectedOrder.items.every((i) => i.productType === 'DIGITAL');
+                  const transitions = isDigital
+                    ? DIGITAL_ORDER_ALLOWED_TRANSITIONS[selectedOrder.status]
+                    : ORDER_ALLOWED_TRANSITIONS[selectedOrder.status];
+                  return transitions.length === 0 ? (
+                    <MenuItem disabled value="">
+                      No transitions available — terminal state
+                    </MenuItem>
+                  ) : null;
+                })()}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Payment Status</InputLabel>
+              <Select
+                value={newPaymentStatus}
+                label="Payment Status"
+                onChange={(e) => setNewPaymentStatus(e.target.value as PaymentStatus)}
+              >
+                {(['PENDING', 'PROCESSING', 'PAID', 'FAILED', 'REFUNDED', 'PARTIAL'] as PaymentStatus[]).map((value) => (
                   <MenuItem key={value} value={value}>
-                    {label}
+                    {paymentLabels[value]}
                   </MenuItem>
                 ))}
               </Select>

@@ -33,9 +33,11 @@ export function NotificationToggle() {
     unsubscribe,
   } = usePushNotifications();
 
-  // Not supported in this browser
+  // isSupported starts as false on both server and client (deferred to useEffect).
+  // Rendering null until it resolves keeps the server HTML and initial client
+  // render identical, preventing a hydration mismatch on permission-dependent branches.
   if (!isSupported) {
-    return null; // Or show a message if you want
+    return null;
   }
 
   // User has blocked notifications

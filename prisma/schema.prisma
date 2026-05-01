@@ -1,6 +1,6 @@
 // ============================================================================
-// E-Commerce Platform - SQLite Development Schema
-// Database: SQLite (for local development/sandbox)
+// E-Commerce Platform - PostgreSQL Schema
+// Database: PostgreSQL (development and production)
 // Version: 1.0.0
 // ============================================================================
 
@@ -9,12 +9,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql" // Use PostgreSQL for development to match production environment
   url      = env("DATABASE_URL")
 }
 
 // ============================================================================
-// ENUMS (SQLite uses strings instead of native enums)
+// ENUMS
 // ============================================================================
 
 /// Admin user roles with hierarchical permissions
@@ -417,8 +417,14 @@ model Order {
   confirmedAt DateTime?
   cancelledAt DateTime?
   refundedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  /// Secure public order lookup — only SHA-256 hash of raw token is persisted
+  lookupToken       String?   @unique
+  lookupTokenExpiry DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   items OrderItem[]
 
@@ -426,6 +432,7 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([lookupToken])
   @@map("orders")
 }
 

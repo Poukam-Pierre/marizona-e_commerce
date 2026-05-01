@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Package, ShoppingCart, Star, Eye } from 'lucide-react';
@@ -15,6 +16,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const [imgError, setImgError] = useState(false);
   const { addItem } = useCart();
   const primaryImage =
     product.image || product.images.find((img) => img.isPrimary)?.url;
@@ -36,13 +38,14 @@ export function ProductCard({ product }: ProductCardProps) {
       <Card className="group overflow-hidden h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
         {/* Image */}
         <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
-          {primaryImage ? (
+          {primaryImage && !imgError ? (
             <Image
               src={primaryImage}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="flex items-center justify-center h-full">

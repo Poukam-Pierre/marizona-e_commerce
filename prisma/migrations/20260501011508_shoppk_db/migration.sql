@@ -1,37 +1,58 @@
+-- CreateEnum
+CREATE TYPE "AdminRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VIEWER');
+
+-- CreateEnum
+CREATE TYPE "ProductType" AS ENUM ('PHYSICAL', 'DIGITAL');
+
+-- CreateEnum
+CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED', 'REFUNDED');
+
+-- CreateEnum
+CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PROCESSING', 'PAID', 'FAILED', 'REFUNDED', 'PARTIAL');
+
+-- CreateEnum
+CREATE TYPE "MovementType" AS ENUM ('PURCHASE', 'SALE', 'RETURN', 'ADJUSTMENT', 'DAMAGE', 'TRANSFER');
+
+-- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('WHATSAPP', 'BANK_TRANSFER', 'CREDIT_CARD', 'E_WALLET', 'COD');
+
 -- CreateTable
 CREATE TABLE "admin_users" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'VIEWER',
+    "role" "AdminRole" NOT NULL DEFAULT 'VIEWER',
     "avatar" TEXT,
-    "emailVerified" DATETIME,
-    "lastLoginAt" DATETIME,
-    "passwordChangedAt" DATETIME,
+    "emailVerified" TIMESTAMP(3),
+    "lastLoginAt" TIMESTAMP(3),
+    "passwordChangedAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isLocked" BOOLEAN NOT NULL DEFAULT false,
-    "lockedUntil" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "deletedAt" DATETIME
+    "lockedUntil" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "admin_users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "admin_sessions" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "adminUserId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "expiresAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "admin_sessions_adminUserId_fkey" FOREIGN KEY ("adminUserId") REFERENCES "admin_users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "admin_sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "admin_audit_logs" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "adminUserId" TEXT NOT NULL,
     "action" TEXT NOT NULL,
     "entity" TEXT NOT NULL,
@@ -40,13 +61,14 @@ CREATE TABLE "admin_audit_logs" (
     "newData" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "admin_audit_logs_adminUserId_fkey" FOREIGN KEY ("adminUserId") REFERENCES "admin_users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "admin_audit_logs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "categories" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
@@ -56,30 +78,31 @@ CREATE TABLE "categories" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "metaTitle" TEXT,
     "metaDescription" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "deletedAt" DATETIME,
-    CONSTRAINT "categories_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "categories_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "products" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sku" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
-    "type" TEXT NOT NULL DEFAULT 'PHYSICAL',
-    "price" REAL NOT NULL,
-    "comparePrice" REAL,
-    "costPrice" REAL,
+    "type" "ProductType" NOT NULL DEFAULT 'PHYSICAL',
+    "price" DOUBLE PRECISION NOT NULL,
+    "comparePrice" DOUBLE PRECISION,
+    "costPrice" DOUBLE PRECISION,
     "inventoryQuantity" INTEGER NOT NULL DEFAULT 0,
     "inventoryTracked" BOOLEAN NOT NULL DEFAULT true,
     "lowStockThreshold" INTEGER NOT NULL DEFAULT 10,
-    "weight" REAL,
-    "length" REAL,
-    "width" REAL,
-    "height" REAL,
+    "weight" DOUBLE PRECISION,
+    "length" DOUBLE PRECISION,
+    "width" DOUBLE PRECISION,
+    "height" DOUBLE PRECISION,
     "downloadUrl" TEXT,
     "downloadLimit" INTEGER,
     "downloadExpiry" INTEGER,
@@ -94,29 +117,31 @@ CREATE TABLE "products" (
     "isBestSeller" BOOLEAN NOT NULL DEFAULT false,
     "viewCount" INTEGER NOT NULL DEFAULT 0,
     "soldCount" INTEGER NOT NULL DEFAULT 0,
-    "rating" REAL,
+    "rating" DOUBLE PRECISION,
     "reviewCount" INTEGER NOT NULL DEFAULT 0,
-    "publishedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "deletedAt" DATETIME,
-    CONSTRAINT "products_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    "publishedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "products_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "product_images" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "alt" TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
     "isPrimary" BOOLEAN NOT NULL DEFAULT false,
-    CONSTRAINT "product_images_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "product_images_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "product_variants" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "sku" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -126,21 +151,22 @@ CREATE TABLE "product_variants" (
     "option2Value" TEXT,
     "option3Name" TEXT,
     "option3Value" TEXT,
-    "price" REAL NOT NULL,
-    "comparePrice" REAL,
+    "price" DOUBLE PRECISION NOT NULL,
+    "comparePrice" DOUBLE PRECISION,
     "inventoryQuantity" INTEGER NOT NULL DEFAULT 0,
-    "weight" REAL,
+    "weight" DOUBLE PRECISION,
     "image" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    CONSTRAINT "product_variants_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "product_variants_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "inventory_movements" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "variantId" TEXT,
-    "type" TEXT NOT NULL,
+    "type" "MovementType" NOT NULL,
     "quantity" INTEGER NOT NULL,
     "reason" TEXT,
     "reference" TEXT,
@@ -148,13 +174,14 @@ CREATE TABLE "inventory_movements" (
     "newStock" INTEGER NOT NULL,
     "notes" TEXT,
     "userId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "inventory_movements_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "inventory_movements_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "customers" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "email" TEXT,
     "phone" TEXT,
     "name" TEXT,
@@ -162,14 +189,16 @@ CREATE TABLE "customers" (
     "whatsappNumber" TEXT,
     "whatsappOptIn" BOOLEAN NOT NULL DEFAULT false,
     "password" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "deletedAt" DATETIME
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "customers_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "customer_addresses" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
     "label" TEXT,
     "name" TEXT NOT NULL,
@@ -178,14 +207,15 @@ CREATE TABLE "customer_addresses" (
     "city" TEXT NOT NULL,
     "province" TEXT NOT NULL,
     "postalCode" TEXT NOT NULL,
-    "country" TEXT NOT NULL DEFAULT 'Indonesia',
+    "country" TEXT NOT NULL DEFAULT 'Cameroon',
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
-    CONSTRAINT "customer_addresses_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "customer_addresses_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "orders" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "orderNumber" TEXT NOT NULL,
     "customerId" TEXT,
     "customerName" TEXT NOT NULL,
@@ -197,48 +227,52 @@ CREATE TABLE "orders" (
     "shippingAddress" TEXT NOT NULL,
     "shippingCity" TEXT NOT NULL,
     "shippingProvince" TEXT NOT NULL,
-    "shippingPostalCode" TEXT NOT NULL,
-    "shippingCountry" TEXT NOT NULL DEFAULT 'Indonesia',
+    "shippingPostalCode" TEXT,
+    "shippingCountry" TEXT NOT NULL DEFAULT 'Cameroon',
     "billingName" TEXT,
     "billingPhone" TEXT,
     "billingAddress" TEXT,
     "billingCity" TEXT,
     "billingProvince" TEXT,
     "billingPostalCode" TEXT,
-    "subtotal" REAL NOT NULL,
-    "discount" REAL NOT NULL DEFAULT 0,
-    "shippingCost" REAL NOT NULL DEFAULT 0,
-    "tax" REAL NOT NULL DEFAULT 0,
-    "total" REAL NOT NULL,
-    "currency" TEXT NOT NULL DEFAULT 'IDR',
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
-    "paymentStatus" TEXT NOT NULL DEFAULT 'PENDING',
-    "paymentMethod" TEXT NOT NULL DEFAULT 'WHATSAPP',
+    "subtotal" DOUBLE PRECISION NOT NULL,
+    "discount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "shippingCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "tax" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "total" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'XAF',
+    "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+    "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'WHATSAPP',
     "paymentId" TEXT,
-    "paidAt" DATETIME,
-    "shippedAt" DATETIME,
-    "deliveredAt" DATETIME,
+    "paidAt" TIMESTAMP(3),
+    "shippedAt" TIMESTAMP(3),
+    "deliveredAt" TIMESTAMP(3),
     "trackingNumber" TEXT,
     "shippingProvider" TEXT,
     "digitalDownloadUrl" TEXT,
-    "digitalDownloadExpiry" DATETIME,
+    "digitalDownloadExpiry" TIMESTAMP(3),
     "customerNotes" TEXT,
     "adminNotes" TEXT,
-    "whatsappSentAt" DATETIME,
-    "whatsappConfirmedAt" DATETIME,
+    "whatsappSentAt" TIMESTAMP(3),
+    "whatsappConfirmedAt" TIMESTAMP(3),
     "couponId" TEXT,
     "couponCode" TEXT,
-    "confirmedAt" DATETIME,
-    "cancelledAt" DATETIME,
-    "refundedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "orders_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    "confirmedAt" TIMESTAMP(3),
+    "cancelledAt" TIMESTAMP(3),
+    "refundedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "lookupToken" TEXT,
+    "lookupTokenExpiry" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "order_items" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "productId" TEXT,
     "productSku" TEXT NOT NULL,
@@ -246,92 +280,100 @@ CREATE TABLE "order_items" (
     "productImage" TEXT,
     "variantId" TEXT,
     "variantName" TEXT,
-    "unitPrice" REAL NOT NULL,
-    "totalPrice" REAL NOT NULL,
+    "unitPrice" DOUBLE PRECISION NOT NULL,
+    "totalPrice" DOUBLE PRECISION NOT NULL,
     "quantity" INTEGER NOT NULL,
     "downloadUrl" TEXT,
     "downloadCount" INTEGER NOT NULL DEFAULT 0,
     "downloadLimit" INTEGER,
-    "downloadExpiry" DATETIME,
-    "productType" TEXT NOT NULL DEFAULT 'PHYSICAL',
+    "downloadExpiry" TIMESTAMP(3),
+    "productType" "ProductType" NOT NULL DEFAULT 'PHYSICAL',
     "isShipped" BOOLEAN NOT NULL DEFAULT false,
-    "shippedAt" DATETIME,
+    "shippedAt" TIMESTAMP(3),
     "isDelivered" BOOLEAN NOT NULL DEFAULT false,
-    "deliveredAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "order_items_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    "deliveredAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "order_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "cart_items" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "customerId" TEXT,
     "sessionId" TEXT,
     "productId" TEXT NOT NULL,
     "variantId" TEXT,
     "quantity" INTEGER NOT NULL,
-    "price" REAL NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "cart_items_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "cart_items_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "price" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "cart_items_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "coupons" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "type" TEXT NOT NULL,
-    "value" REAL NOT NULL,
-    "minOrderValue" REAL,
-    "maxDiscount" REAL,
+    "value" DOUBLE PRECISION NOT NULL,
+    "minOrderValue" DOUBLE PRECISION,
+    "maxDiscount" DOUBLE PRECISION,
     "usageLimit" INTEGER,
     "usageCount" INTEGER NOT NULL DEFAULT 0,
     "productIds" TEXT NOT NULL,
     "categoryIds" TEXT NOT NULL,
-    "startsAt" DATETIME,
-    "expiresAt" DATETIME,
+    "startsAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "coupons_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "settings" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "category" TEXT NOT NULL DEFAULT 'general',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "settings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "webhook_events" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "payload" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'pending',
     "attempts" INTEGER NOT NULL DEFAULT 0,
     "lastError" TEXT,
-    "sentAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "sentAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "webhook_events_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "push_subscriptions" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
     "p256dh" TEXT NOT NULL,
     "auth" TEXT NOT NULL,
     "userId" TEXT,
     "userAgent" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "push_subscriptions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -413,6 +455,9 @@ CREATE INDEX "customer_addresses_customerId_idx" ON "customer_addresses"("custom
 CREATE UNIQUE INDEX "orders_orderNumber_key" ON "orders"("orderNumber");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "orders_lookupToken_key" ON "orders"("lookupToken");
+
+-- CreateIndex
 CREATE INDEX "orders_orderNumber_idx" ON "orders"("orderNumber");
 
 -- CreateIndex
@@ -423,6 +468,9 @@ CREATE INDEX "orders_status_idx" ON "orders"("status");
 
 -- CreateIndex
 CREATE INDEX "orders_createdAt_idx" ON "orders"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "orders_lookupToken_idx" ON "orders"("lookupToken");
 
 -- CreateIndex
 CREATE INDEX "order_items_orderId_idx" ON "order_items"("orderId");
@@ -459,3 +507,42 @@ CREATE INDEX "push_subscriptions_endpoint_idx" ON "push_subscriptions"("endpoint
 
 -- CreateIndex
 CREATE INDEX "push_subscriptions_userId_idx" ON "push_subscriptions"("userId");
+
+-- AddForeignKey
+ALTER TABLE "admin_sessions" ADD CONSTRAINT "admin_sessions_adminUserId_fkey" FOREIGN KEY ("adminUserId") REFERENCES "admin_users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_audit_logs" ADD CONSTRAINT "admin_audit_logs_adminUserId_fkey" FOREIGN KEY ("adminUserId") REFERENCES "admin_users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "categories" ADD CONSTRAINT "categories_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_images" ADD CONSTRAINT "product_images_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "inventory_movements" ADD CONSTRAINT "inventory_movements_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "customer_addresses" ADD CONSTRAINT "customer_addresses_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "orders" ADD CONSTRAINT "orders_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;

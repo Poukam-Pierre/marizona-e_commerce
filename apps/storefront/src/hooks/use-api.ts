@@ -67,11 +67,13 @@ export function useCreateOrder() {
   });
 }
 
-export function useOrder(id: string) {
+export function useOrder(id: string, token: string) {
   return useQuery({
     queryKey: queryKeys.order(id),
-    queryFn: () => api.getOrder(id),
-    enabled: !!id,
+    queryFn: () => api.getOrder(id, token),
+    enabled: !!id && !!token,
+    // Auto-refresh every 60 s — status is updated manually by admin
+    refetchInterval: 60_000,
   });
 }
 

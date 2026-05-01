@@ -37,10 +37,15 @@ export default function ProductDetailPage() {
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string>
   >({});
+  const [directVariantId, setDirectVariantId] = useState<string | null>(null);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [mainImgError, setMainImgError] = useState(false);
+  const [thumbImgErrors, setThumbImgErrors] = useState<Record<number, boolean>>(
+    {},
+  );
 
   useEffect(() => {
     try {
@@ -95,16 +100,21 @@ export default function ProductDetailPage() {
   });
 
   // Find variant matching ALL currently selected options
-  const selectedVariantData =
-    Object.keys(selectedOptions).length > 0
-      ? (product.variants.find((v) =>
-          Object.entries(selectedOptions).every(
-            ([optName, optValue]) =>
-              (v.option1Name === optName && v.option1Value === optValue) ||
-              (v.option2Name === optName && v.option2Value === optValue) ||
-              (v.option3Name === optName && v.option3Value === optValue),
-          ),
-        ) ?? null)
+  const hasOptionVariants = Object.keys(variantOptions).length > 0;
+
+  const selectedVariantData = hasOptionVariants
+    ? (Object.keys(selectedOptions).length > 0
+        ? (product.variants.find((v) =>
+            Object.entries(selectedOptions).every(
+              ([optName, optValue]) =>
+                (v.option1Name === optName && v.option1Value === optValue) ||
+                (v.option2Name === optName && v.option2Value === optValue) ||
+                (v.option3Name === optName && v.option3Value === optValue),
+            ),
+          ) ?? null)
+        : null)
+    : directVariantId
+      ? (product.variants.find((v) => v.id === directVariantId) ?? null)
       : null;
   const selectedVariantId = selectedVariantData?.id ?? null;
 
@@ -143,7 +153,9 @@ export default function ProductDetailPage() {
 
   const handleOptionSelect = (optionName: string, optionValue: string) => {
     setSelectedOptions((prev) => ({ ...prev, [optionName]: optionValue }));
-    setSelectedImage(0); // jump to variant image / first image
+    setDirectVariantId(null);
+    setSelectedImage(0);
+    setMainImgError(false);
   };
 
   const handleAddToCart = () => {
@@ -160,14 +172,44 @@ export default function ProductDetailPage() {
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({
-        title: product.name,
-        text: product.description || '',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.description || '',
+          url: window.location.href,
+        });
+        // return;
+      } catch {
+        // user cancelled or share unavailable — fall through
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+        return;
+      } catch {
+        // clipboard blocked (HTTP / permissions) — fall through
+      }
+    }
+
+    // Final fallback: execCommand (works on HTTP)
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = window.location.href;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
       toast.success('Link copied to clipboard');
+    } catch {
+      toast.error(
+        'Could not copy link. Please copy it manually from the address bar.',
+      );
     }
   };
 
@@ -187,7 +229,7 @@ export default function ProductDetailPage() {
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-              {primaryImage ? (
+              {primaryImage && !mainImgError ? (
                 <Image
                   src={primaryImage}
                   alt={product.name}
@@ -195,6 +237,7 @@ export default function ProductDetailPage() {
                   className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  onError={() => setMainImgError(true)}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -225,19 +268,34 @@ export default function ProductDetailPage() {
                 {displayImages.map((img, index) => (
                   <button
                     key={img.id}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => {
+                      setSelectedImage(index);
+                      setMainImgError(false);
+                    }}
                     className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
                       selectedImage === index
                         ? 'border-primary'
                         : 'border-transparent hover:border-muted-foreground/30'
                     }`}
                   >
-                    <Image
-                      src={img.url}
-                      alt={img.alt || product.name}
-                      fill
-                      className="object-cover"
-                    />
+                    {thumbImgErrors[index] ? (
+                      <div className="flex items-center justify-center h-full bg-slate-100 dark:bg-slate-800">
+                        <Package className="h-6 w-6 text-slate-400" />
+                      </div>
+                    ) : (
+                      <Image
+                        src={img.url}
+                        alt={img.alt || product.name}
+                        fill
+                        className="object-cover"
+                        onError={() =>
+                          setThumbImgErrors((prev) => ({
+                            ...prev,
+                            [index]: true,
+                          }))
+                        }
+                      />
+                    )}
                   </button>
                 ))}
               </div>
@@ -380,31 +438,58 @@ export default function ProductDetailPage() {
             {/* Variants */}
             {product.variants.length > 0 && (
               <div className="space-y-4">
-                {Object.entries(variantOptions).map(([optionName, values]) => (
-                  <div key={optionName}>
+                {hasOptionVariants ? (
+                  Object.entries(variantOptions).map(([optionName, values]) => (
+                    <div key={optionName}>
+                      <label className="text-sm font-medium mb-2 block">
+                        {optionName}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {values.map((optValue) => (
+                          <Button
+                            key={optValue}
+                            variant={
+                              selectedOptions[optionName] === optValue
+                                ? 'default'
+                                : 'outline'
+                            }
+                            size="sm"
+                            onClick={() =>
+                              handleOptionSelect(optionName, optValue)
+                            }
+                          >
+                            {optValue}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Fallback: variants have no option fields — select by name
+                  <div>
                     <label className="text-sm font-medium mb-2 block">
-                      {optionName}
+                      Variant
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {values.map((optValue) => (
+                      {product.variants.map((v) => (
                         <Button
-                          key={optValue}
+                          key={v.id}
                           variant={
-                            selectedOptions[optionName] === optValue
-                              ? 'default'
-                              : 'outline'
+                            directVariantId === v.id ? 'default' : 'outline'
                           }
                           size="sm"
-                          onClick={() =>
-                            handleOptionSelect(optionName, optValue)
-                          }
+                          onClick={() => {
+                            setDirectVariantId(v.id);
+                            setSelectedImage(0);
+                            setMainImgError(false);
+                          }}
                         >
-                          {optValue}
+                          {v.name}
                         </Button>
                       ))}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
 

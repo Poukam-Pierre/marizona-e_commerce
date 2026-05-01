@@ -10,12 +10,17 @@ import {
   MessageCircle,
   Loader2,
   CheckCircle,
+  ExternalLink,
+  Copy,
+  Check,
+  Share2,
 } from 'lucide-react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useCart } from '@/providers/cart-provider';
 import { useCreateOrder } from '@/hooks/use-api';
 import { apiFetch, API_ENDPOINTS } from '@/services/api';
+import { saveRecentOrder } from '@/app/orders/track/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,6 +71,9 @@ export default function CheckoutPage() {
   const [sameAsBilling, setSameAsBilling] = useState(true);
   const [orderCreated, setOrderCreated] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [trackingCopied, setTrackingCopied] = useState(false);
 
   const formatPrice = (price: number) => {
     return `FCFA ${price.toLocaleString('id-ID')}`;
@@ -117,6 +125,23 @@ export default function CheckoutPage() {
         } catch {
           // non-critical – ignore storage errors
         }
+
+        // Build tokenised tracking URL and persist to sessionStorage for this session
+        const tUrl = `${window.location.origin}/orders/${order.id}?token=${encodeURIComponent(order.lookupToken)}`;
+        try {
+          sessionStorage.setItem(`order-token-${order.id}`, order.lookupToken);
+        } catch {
+          // ignore storage errors
+        }
+        // Save to localStorage so the /orders/track page can list it later
+        saveRecentOrder({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          trackingUrl: tUrl,
+          createdAt: order.createdAt,
+        });
+        setTrackingUrl(tUrl);
+        setOrderNumber(order.orderNumber);
 
         // Fetch WhatsApp URL from backend (includes properly formatted message)
         const { url: waUrl } = await apiFetch<{ url: string }>(
@@ -181,36 +206,138 @@ export default function CheckoutPage() {
 
   // Success state
   if (orderCreated) {
+    const canShare = typeof navigator !== 'undefined' && !!navigator.share;
+
+    const handleCopyTracking = async () => {
+      if (!trackingUrl) return;
+      // Try modern Clipboard API first; fall back to execCommand for older/mobile browsers
+      let success = false;
+      try {
+        await navigator.clipboard.writeText(trackingUrl);
+        success = true;
+      } catch {
+        // Clipboard API not available (HTTP, focus issue, permission denied)
+      }
+      if (!success) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = trackingUrl;
+          ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          success = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch {
+          // execCommand also failed
+        }
+      }
+      if (success) {
+        setTrackingCopied(true);
+        setTimeout(() => setTrackingCopied(false), 2000);
+      } else {
+        toast.error('Copy not supported on this browser. Use the Share button.');
+      }
+    };
+
+    const handleShare = async () => {
+      if (!trackingUrl || !navigator.share) return;
+      try {
+        await navigator.share({
+          title: `Order #${orderNumber} tracking`,
+          text: 'Track your ShopPk order here:',
+          url: trackingUrl,
+        });
+      } catch {
+        // User dismissed share sheet — not an error
+      }
+    };
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-8 w-8 text-emerald-600" />
+          <CardContent className="p-8">
+            {/* Success icon */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-emerald-600" />
+              </div>
+              <h1 className="text-2xl font-bold">Order Created!</h1>
+              {orderNumber && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Order{' '}
+                  <span className="font-mono font-semibold text-foreground">
+                    #{orderNumber}
+                  </span>
+                </p>
+              )}
             </div>
-            <h1 className="text-2xl font-bold mb-2">Order Created!</h1>
-            <p className="text-muted-foreground mb-6">
-              Your order has been created successfully. Click the button below
-              to send your order via WhatsApp.
-            </p>
 
+            {/* WhatsApp CTA — primary action */}
             {whatsappUrl && (
               <Button
-                className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                className="w-full gap-2 bg-green-600 hover:bg-green-700 mb-3"
                 size="lg"
-                onClick={() => {
-                  window.open(whatsappUrl, '_blank');
-                }}
+                onClick={() => window.open(whatsappUrl, '_blank')}
               >
                 <MessageCircle className="h-5 w-5" />
                 Send Order via WhatsApp
               </Button>
             )}
 
-            <Separator className="my-6" />
+            {/* Tracking CTA */}
+            {trackingUrl && (
+              <Link href={trackingUrl}>
+                <Button variant="outline" className="w-full gap-2 mb-3" size="lg">
+                  <ExternalLink className="h-4 w-4" />
+                  Track your order
+                </Button>
+              </Link>
+            )}
+
+            <Separator className="my-4" />
+
+            {/* Save tracking link reminder */}
+            {trackingUrl && (
+              <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-700/50 p-3 mb-4">
+                <p className="text-xs font-medium text-amber-800 dark:text-amber-200 mb-1">
+                  Save your tracking link
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
+                  This is your only way to check order status and download digital
+                  products without an account.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 flex-1 border-amber-300 hover:border-amber-400"
+                    onClick={handleCopyTracking}
+                  >
+                    {trackingCopied ? (
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                    {trackingCopied ? 'Copied!' : 'Copy link'}
+                  </Button>
+                  {canShare && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 flex-1 border-amber-300 hover:border-amber-400"
+                      onClick={handleShare}
+                    >
+                      <Share2 className="h-3 w-3" />
+                      Share
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <Link href="/">
-              <Button variant="outline" className="w-full">
+              <Button variant="ghost" className="w-full text-muted-foreground" size="sm">
                 Continue Shopping
               </Button>
             </Link>

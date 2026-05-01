@@ -70,17 +70,10 @@ export interface Category {
 export interface Order {
   id: string;
   orderNumber: string;
-  customerName: string;
-  customerEmail: string | null;
-  customerPhone: string;
-  customerWhatsapp: string | null;
-  shippingName: string;
-  shippingPhone: string;
-  shippingAddress: string;
+  /** Phone masked to last 4 digits */
+  maskedPhone: string;
   shippingCity: string;
   shippingProvince: string;
-  shippingPostalCode: string;
-  shippingCountry: string;
   subtotal: number;
   discount: number;
   shippingCost: number;
@@ -91,6 +84,12 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   createdAt: string;
+  confirmedAt: string | null;
+  paidAt: string | null;
+  completedAt: string | null;
+  deliveredAt: string | null;
+  /** Expiry of the lookup token — shown on tracking page */
+  lookupTokenExpiry: string | null;
   items: OrderItem[];
 }
 
@@ -106,6 +105,17 @@ export interface OrderItem {
   totalPrice: number;
   quantity: number;
   productType: 'PHYSICAL' | 'DIGITAL';
+  /** Computed by API based on payment + status + expiry + limit */
+  downloadEligible: boolean;
+  downloadBlockedReason:
+    | 'NOT_PAID'
+    | 'ORDER_CANCELLED'
+    | 'LINK_EXPIRED'
+    | 'LIMIT_REACHED'
+    | null;
+  downloadCount: number;
+  downloadLimit: number | null;
+  downloadExpiry: string | null;
 }
 
 export type OrderStatus =
@@ -166,6 +176,14 @@ export interface ProductQuery {
   maxPrice?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+
+/** Returned ONCE at order creation — raw token, never persisted by server */
+export interface OrderCreatedResponse extends Omit<Order, 'maskedPhone' | 'confirmedAt' | 'paidAt' | 'completedAt' | 'deliveredAt' | 'lookupTokenExpiry'> {
+  customerName: string;
+  customerPhone: string;
+  lookupToken: string;
+  lookupTokenExpiry: string;
 }
 
 // Create Order DTO
