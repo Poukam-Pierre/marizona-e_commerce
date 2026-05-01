@@ -81,6 +81,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, typecheck]
     services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:7-alpine
         ports:
@@ -91,7 +104,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: file:./test.db
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: test-jwt-secret
       JWT_REFRESH_SECRET: test-refresh-secret
