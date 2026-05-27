@@ -21,6 +21,7 @@ major_version = 15
 # Port to use for Supabase Studio.
 port = 54323
 
-[functions]
-# Whether to verify JWT tokens for authenticated requests
-verify_jwt = true
+# Per-function settings. verify_jwt defaults to true for all functions.
+# Override per function as needed:
+# [functions.my-public-function]
+# verify_jwt = false
