@@ -22,6 +22,11 @@
 
 import { createAdminClient } from '../_shared/auth.ts';
 import { errorResponse, corsResponse } from '../_shared/response.ts';
+import {
+  checkRateLimit,
+  rateLimitHeaders,
+  RATE_LIMIT_TIERS,
+} from '../_shared/rate-limit.ts';
 
 // ---------------------------------------------------------------------------
 // Hash helper
@@ -64,6 +69,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const tokenHashHex = await hashToken(rawToken);
 
+    // Rate limit by token hash prefix (5 req/60 s — prevents download abuse)
+    const rlSubject = `token-${tokenHashHex.slice(0, 16)}`;
+    const rlResult  = await checkRateLimit('orders-download-item', rlSubject, RATE_LIMIT_TIERS.strict);
+
+    // Helper: error response with rate-limit headers attached
+    const rlErr = (msg: string, status: number) => new Response(
+      JSON.stringify({ error: msg, statusCode: status }),
+      {
+        status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          ...rateLimitHeaders(rlResult),
+        },
+      },
+    );
+
+    if (!rlResult.allowed) return rlErr('Too many requests', 429);
+
     // process_download is a SECURITY DEFINER function (service_role only)
     const admin = createAdminClient();
 
@@ -76,20 +102,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (rpcError) {
       console.error('[orders-download-item] RPC error:', rpcError.message);
       const status = ERROR_STATUS_MAP[rpcError.message] ?? 403;
-      return errorResponse(rpcError.message, status);
+      return rlErr(rpcError.message, status);
     }
 
     if (!data?.download_url) {
-      return errorResponse('No download URL configured for this item', 500);
+      return rlErr('No download URL configured for this item', 500);
     }
 
     // Redirect — URL is never exposed in the response body
     return new Response(null, {
       status: 302,
       headers: {
-        Location:                        data.download_url,
-        'Access-Control-Allow-Origin':   '*',
-        'Cache-Control':                 'no-store',
+        Location:                      data.download_url,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control':               'no-store',
+        ...rateLimitHeaders(rlResult),
       },
     });
 

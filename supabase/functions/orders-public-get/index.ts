@@ -21,6 +21,11 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { jsonResponse, errorResponse, corsResponse } from '../_shared/response.ts';
+import {
+  checkRateLimit,
+  rateLimitHeaders,
+  RATE_LIMIT_TIERS,
+} from '../_shared/rate-limit.ts';
 
 const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -53,6 +58,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const tokenHashHex = await hashToken(rawToken);
 
+    // Rate limit by token hash prefix (10 req/60 s — prevents order enumeration)
+    const rlSubject = `token-${tokenHashHex.slice(0, 16)}`;
+    const rlResult  = await checkRateLimit('orders-public-get', rlSubject, RATE_LIMIT_TIERS.medium);
+
+    // Helper: error response with rate-limit headers attached
+    const rlErr = (msg: string, status: number) => new Response(
+      JSON.stringify({ error: msg, statusCode: status }),
+      {
+        status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          ...rateLimitHeaders(rlResult),
+        },
+      },
+    );
+
+    if (!rlResult.allowed) return rlErr('Too many requests', 429);
+
     // Use anon client — the lookup_token IS NOT NULL policy (migration 20260529)
     // already allows reading the row
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -83,13 +109,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (error) {
       console.error('[orders-public-get] DB error:', error.message);
-      return errorResponse('Order not found', 404);
+      return rlErr('Order not found', 404);
     }
-    if (!order) return errorResponse('Order not found', 404);
+    if (!order) return rlErr('Order not found', 404);
 
     // Check token expiry
     if (order.lookupTokenExpiry && new Date(order.lookupTokenExpiry) < new Date()) {
-      return errorResponse('Order not found', 404);
+      return rlErr('Order not found', 404);
     }
 
     // Mask phone number (last 4 digits only)
@@ -127,13 +153,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { lookupTokenExpiry: _exp, ...safeOrder } = order;
 
-    return jsonResponse({
-      data: {
-        ...safeOrder,
-        customerPhone: maskedPhone,
-        items,
+    return new Response(
+      JSON.stringify({
+        data: {
+          ...safeOrder,
+          customerPhone: maskedPhone,
+          items,
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          ...rateLimitHeaders(rlResult),
+        },
       },
-    });
+    );
 
   } catch (err) {
     console.error('[orders-public-get] Unexpected error:', err);
