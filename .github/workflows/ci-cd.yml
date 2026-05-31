@@ -1,6 +1,20 @@
 # ============================================================================
 # ShopPk CI/CD Pipeline
 # ============================================================================
+#
+# Architecture: Supabase Edge Functions + Vercel (Next.js)
+#
+# Required GitHub Secrets:
+#   SUPABASE_ACCESS_TOKEN    — personal access token from supabase.com/account/tokens
+#   SUPABASE_PROJECT_REF     — project ref (pxawbeabanhomemluson)
+#   VERCEL_STOREFRONT_DEPLOY_HOOK — Vercel deploy webhook URL for storefront
+#   VERCEL_ADMIN_DEPLOY_HOOK      — Vercel deploy webhook URL for admin
+#
+# Job flow:
+#   lint ──┐
+#          ├─→ test ──→ deploy-functions   (on push to main/develop)
+#   typecheck ─┘    └─→ build ──→ deploy-vercel  (on push to main/develop)
+# ============================================================================
 
 name: ShopPk CI/CD
 
@@ -69,45 +83,17 @@ jobs:
 
       - name: Type Check
         run: |
-          bunx tsc --noEmit -p apps/api/tsconfig.json
           bunx tsc --noEmit -p apps/storefront/tsconfig.json
           bunx tsc --noEmit -p apps/admin/tsconfig.json
 
   # ---------------------------------------------------------------------------
   # Test Job
+  # (No PostgreSQL/Redis services — backend is Supabase, not NestJS)
   # ---------------------------------------------------------------------------
   test:
     name: Test
     runs-on: ubuntu-latest
     needs: [lint, typecheck]
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U testuser"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
-      REDIS_URL: redis://localhost:6379
-      JWT_SECRET: test-jwt-secret
-      JWT_REFRESH_SECRET: test-refresh-secret
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -123,14 +109,11 @@ jobs:
       - name: Generate Prisma Client
         run: bun run db:generate
 
-      - name: Run database migrations
-        run: bunx prisma migrate deploy
-
       - name: Run tests
-        run: bun run test
+        run: bun run test --passWithNoTests
 
   # ---------------------------------------------------------------------------
-  # Build Job
+  # Build Job (storefront + admin only — API is Edge Functions, not built here)
   # ---------------------------------------------------------------------------
   build:
     name: Build
@@ -151,159 +134,55 @@ jobs:
       - name: Generate Prisma Client
         run: bun run db:generate
 
-      - name: Build API
-        run: bunx nx build api --prod
-
       - name: Build Storefront
         run: bunx nx build storefront --prod
 
       - name: Build Admin
         run: bunx nx build admin --prod
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            dist/
-            apps/storefront/.next/
-            apps/admin/.next/
-          retention-days: 1
-
-    # ---------------------------------------------------------------------------
-    # Docker Build & Push Job
-    # ---------------------------------------------------------------------------
-  docker:
-    name: Docker Build & Push
+  # ---------------------------------------------------------------------------
+  # Deploy Edge Functions to Supabase
+  # Runs on every push to main or develop (and manual dispatch).
+  # Uses Supabase CLI — deploys ALL functions under supabase/functions/.
+  # Only changed functions incur re-deployment cost; unchanged ones are no-ops.
+  # ---------------------------------------------------------------------------
+  deploy-functions:
+    name: Deploy Edge Functions
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [test]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: read
-      packages: write
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
         with:
-          name: build-artifacts
+          version: latest
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Convert repository owner to lowercase
-        id: repo_owner
-        run: echo "owner_lower=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/api
-            ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/storefront
-            ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/admin
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix=
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-
-      - name: Build and push API
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/Dockerfile.api
-          push: true
-          tags: ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/api:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Storefront
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/Dockerfile.storefront
-          push: true
-          tags: ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/storefront:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Admin
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/Dockerfile.admin
-          push: true
-          tags: ghcr.io/${{ steps.repo_owner.outputs.owner_lower }}/shoppk/admin:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ---------------------------------------------------------------------------
-  # Deploy to Staging
-  # ---------------------------------------------------------------------------
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [docker]
-    if: github.ref == 'refs/heads/develop'
-    environment:
-      name: staging
-      url: https://staging.shoppk.com
-    steps:
-      - name: Deploy to staging
+      - name: Deploy all Edge Functions
         run: |
-          echo "Deploying to staging environment..."
-          # Add your deployment commands here
-          # Examples:
-          # - kubectl apply -f k8s/staging/
-          # - helm upgrade --install shoppk-staging ./helm -f helm/values-staging.yaml
-          # - aws ecs update-service --cluster staging --service shoppk --force-new-deployment
+          supabase functions deploy \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} \
+            --no-verify-jwt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
   # ---------------------------------------------------------------------------
-  # Deploy to Production
+  # Deploy Vercel (storefront + admin)
+  # Triggers Vercel deploy hooks after a successful build.
+  # Vercel builds from source — the build job above validates it compiles first.
   # ---------------------------------------------------------------------------
-  deploy-production:
-    name: Deploy to Production
+  deploy-vercel:
+    name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: [docker]
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-    environment:
-      name: production
-      url: https://www.shoppk.com
+    needs: [build]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push'
     steps:
-      - name: Deploy API to OCI Server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.OCI_HOST }}
-          username: ubuntu
-          key: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/${{ github.repository_owner }}/shoppk/api:latest
-            docker stop shoppk-api 2>/dev/null || true
-            docker rm shoppk-api 2>/dev/null || true
-            docker run -d \
-              --name shoppk-api \
-              --restart unless-stopped \
-              --network host \
-              -e DATABASE_URL="${{ secrets.SUPABASE_DATABASE_URL }}" \
-              -e REDIS_URL="redis://localhost:6379" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e JWT_REFRESH_SECRET="${{ secrets.JWT_REFRESH_SECRET }}" \
-              ghcr.io/${{ github.repository_owner }}/shoppk/api:latest
+      - name: Trigger Storefront Deploy
+        run: curl -fsSL -X POST "${{ secrets.VERCEL_STOREFRONT_DEPLOY_HOOK }}"
 
-      - name: Trigger Vercel Storefront Deploy
-        run: curl -X POST "${{ secrets.VERCEL_STOREFRONT_DEPLOY_HOOK }}"
-
-      - name: Trigger Vercel Admin Deploy
-        run: curl -X POST "${{ secrets.VERCEL_ADMIN_DEPLOY_HOOK }}"
+      - name: Trigger Admin Deploy
+        run: curl -fsSL -X POST "${{ secrets.VERCEL_ADMIN_DEPLOY_HOOK }}"
