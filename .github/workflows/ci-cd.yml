@@ -169,20 +169,5 @@ jobs:
             --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-  # ---------------------------------------------------------------------------
-  # Deploy Vercel (storefront + admin)
-  # Triggers Vercel deploy hooks after a successful build.
-  # Vercel builds from source — the build job above validates it compiles first.
-  # ---------------------------------------------------------------------------
-  deploy-vercel:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push'
-    steps:
-      - name: Trigger Storefront Deploy
-        run: curl -fsSL -X POST "${{ secrets.VERCEL_STOREFRONT_DEPLOY_HOOK }}"
-
-      - name: Trigger Admin Deploy
-        run: curl -fsSL -X POST "${{ secrets.VERCEL_ADMIN_DEPLOY_HOOK }}"
+  # Vercel deploys storefront and admin automatically via Git integration —
+  # no webhook or CI step needed.
