@@ -1,24 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
-
-/**
- * Derive the Socket.io server base URL from NEXT_PUBLIC_API_URL.
- * The API URL includes "/api/v1", but the socket server lives at the root host.
- * Falls back to the API port (3002) for local development.
- */
-function getSocketBaseUrl(): string {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (apiUrl) {
-    // Strip trailing /api/v1 or /api to get the bare origin
-    return apiUrl.replace(/\/api(\/v\d+)?\/?$/, '');
-  }
-  return 'http://localhost:3002';
-}
+import { supabase } from '@/lib/supabase';
 
 export interface ProductNotification {
-  type: 'product.created';
+  type: 'product.created' | 'product.updated' | 'product.deleted';
   product: {
     id: string;
     name: string;
@@ -26,7 +12,6 @@ export interface ProductNotification {
     price: number;
     image?: string;
     categoryId?: string;
-    categoryName?: string;
   };
   timestamp: Date;
 }
@@ -34,149 +19,119 @@ export interface ProductNotification {
 interface UseProductNotificationsOptions {
   /** Auto-connect on mount. Default: true */
   autoConnect?: boolean;
-  /** Topics to subscribe to. Default: ['products'] */
-  topics?: string[];
   /** Callback when a new product is created */
   onProductCreated?: (notification: ProductNotification) => void;
 }
 
+/**
+ * Subscribes globally to Supabase Realtime postgres_changes on the `products`
+ * table. Replaces the previous Socket.io implementation.
+ * The public interface is intentionally kept identical so ProductNotificationsProvider
+ * requires zero changes.
+ */
 export function useProductNotifications(
   options: UseProductNotificationsOptions = {},
 ) {
-  const {
-    autoConnect = true,
-    topics = ['products'],
-    onProductCreated,
-  } = options;
+  const { autoConnect = true, onProductCreated } = options;
 
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState<ProductNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Use refs to avoid recreating listeners on every render
   const onProductCreatedRef = useRef(onProductCreated);
-
   useEffect(() => {
     onProductCreatedRef.current = onProductCreated;
   }, [onProductCreated]);
 
-  // Serialize topics so an inline array literal from the caller (e.g.
-  // topics={['products']}) does not create a new reference on every render and
-  // cause repeated socket connect/disconnect cycles.
-  const topicsKey = JSON.stringify(topics);
-
   useEffect(() => {
     if (!autoConnect) return;
 
-    // Connect to WebSocket server using an absolute URL so the socket
-    // reaches the API server (port 3002) directly, regardless of the proxy
-    // in front of the storefront (port 3000).
-    const socketInstance = io(`${getSocketBaseUrl()}/notifications`, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 10000,
-    });
-
-    setSocket(socketInstance);
-
-    // Connection handlers
-    socketInstance.on('connect', () => {
-      setIsConnected(true);
-      setError(null);
-      console.log('Connected to notifications server');
-
-      // Subscribe to topics
-      const parsedTopics: string[] = JSON.parse(topicsKey);
-      if (parsedTopics.length > 0) {
-        socketInstance.emit('subscribe', { topics: parsedTopics });
-      }
-    });
-
-    socketInstance.on('disconnect', () => {
-      setIsConnected(false);
-      console.log('Disconnected from notifications server');
-    });
-
-    socketInstance.on('connect_error', (err) => {
-      setError(err.message);
-      console.error('Connection error:', err);
-    });
-
-    socketInstance.on('connected', (data) => {
-      console.log('Server confirmed connection:', data);
-    });
-
-    // Product notification handlers
-    socketInstance.on(
-      'product.created',
-      (notification: ProductNotification) => {
-        console.log('New product created:', notification);
-        setNotifications((prev) => [notification, ...prev]);
-        onProductCreatedRef.current?.(notification);
-      },
-    );
+    const channel = supabase
+      .channel('storefront:products')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'products' },
+        (payload) => {
+          const row = payload.new as Record<string, unknown>;
+          const notification: ProductNotification = {
+            type: 'product.created',
+            product: {
+              id: row['id'] as string,
+              name: row['name'] as string,
+              slug: row['slug'] as string,
+              price: row['price'] as number,
+              image: row['image'] as string | undefined,
+              categoryId: row['category_id'] as string | undefined,
+            },
+            timestamp: new Date(),
+          };
+          setNotifications((prev) => [notification, ...prev]);
+          onProductCreatedRef.current?.(notification);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'products' },
+        (payload) => {
+          const row = payload.new as Record<string, unknown>;
+          const notification: ProductNotification = {
+            type: 'product.updated',
+            product: {
+              id: row['id'] as string,
+              name: row['name'] as string,
+              slug: row['slug'] as string,
+              price: row['price'] as number,
+              image: row['image'] as string | undefined,
+              categoryId: row['category_id'] as string | undefined,
+            },
+            timestamp: new Date(),
+          };
+          setNotifications((prev) => [notification, ...prev]);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'products' },
+        (payload) => {
+          const row = payload.old as Record<string, unknown>;
+          const notification: ProductNotification = {
+            type: 'product.deleted',
+            product: {
+              id: row['id'] as string,
+              name: (row['name'] as string) ?? '',
+              slug: (row['slug'] as string) ?? '',
+              price: (row['price'] as number) ?? 0,
+            },
+            timestamp: new Date(),
+          };
+          setNotifications((prev) => [notification, ...prev]);
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          setError(null);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setIsConnected(false);
+          setError(`Realtime channel error: ${status}`);
+        } else if (status === 'CLOSED') {
+          setIsConnected(false);
+        }
+      });
 
     return () => {
-      socketInstance.disconnect();
+      supabase.removeChannel(channel);
     };
-  }, [autoConnect, topicsKey]);
-
-  const subscribe = useCallback(
-    (newTopics: string[]) => {
-      if (socket && isConnected) {
-        socket.emit('subscribe', { topics: newTopics });
-      }
-    },
-    [socket, isConnected],
-  );
-
-  const unsubscribe = useCallback(
-    (topicsToUnsubscribe: string[]) => {
-      if (socket && isConnected) {
-        socket.emit('unsubscribe', { topics: topicsToUnsubscribe });
-      }
-    },
-    [socket, isConnected],
-  );
+  }, [autoConnect]);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
   }, []);
 
-  const disconnect = useCallback(() => {
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
-      setIsConnected(false);
-    }
-  }, [socket]);
-
-  const connect = useCallback(() => {
-    if (!socket) {
-      const socketInstance = io(`${getSocketBaseUrl()}/notifications`, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        timeout: 10000,
-      });
-      setSocket(socketInstance);
-    } else if (!isConnected) {
-      socket.connect();
-    }
-  }, [socket, isConnected]);
-
   return {
     isConnected,
     error,
     notifications,
-    subscribe,
-    unsubscribe,
     clearNotifications,
-    disconnect,
-    connect,
   };
 }

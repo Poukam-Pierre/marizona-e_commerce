@@ -18,7 +18,6 @@ export function ProductNotificationsProvider({
 
   const { isConnected } = useProductNotifications({
     autoConnect: true,
-    topics: ['products'],
     onProductCreated: (notification) => {
       toast.success(`New product: ${notification.product.name}`, {
         description: 'Just arrived in the store!',
