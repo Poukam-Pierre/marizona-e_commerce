@@ -53,12 +53,14 @@ CREATE POLICY "public_read_active_categories"
   USING ("isActive" = true AND "deletedAt" IS NULL);
 
 -- ---------------------------------------------------------------------------
--- SETTINGS: public can read settings in the 'public' category only
+-- SETTINGS: public can read settings in the 'general' or 'store' categories only
+-- (Updated 20260601: 'public' category does not exist; seeded settings use
+--  'general'/'store'/'checkout'/'notifications'. Only general+store are public.)
 -- ---------------------------------------------------------------------------
 CREATE POLICY "public_read_public_settings"
   ON settings
   FOR SELECT
-  USING (category = 'public');
+  USING (category IN ('general', 'store'));
 
 -- ---------------------------------------------------------------------------
 -- COUPONS: public can read active coupons (needed at checkout to validate)

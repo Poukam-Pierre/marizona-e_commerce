@@ -46,7 +46,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
 const ALLOWED_SORT_FIELDS = ['createdAt', 'price', 'name', 'soldCount', 'rating'] as const;
 type SortField = typeof ALLOWED_SORT_FIELDS[number];
@@ -150,6 +150,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     // Query database
     // -------------------------------------------------------------------------
+    // Use anon key — RLS policy "public_read_active_products" (migration 20260528)
+    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const offset = (page - 1) * limit;
@@ -165,12 +167,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
          publishedAt, createdAt, updatedAt, categoryId, ownerName, ownerWhatsapp,
          category:categories!categoryId(id, name, slug),
          images:product_images(id, url, alt, order, isPrimary),
-         variants:product_variants!inner(id, sku, name, price, comparePrice, inventoryQuantity, isActive, image,
+         variants:product_variants(id, sku, name, price, comparePrice, inventoryQuantity, isActive, image,
            option1Name, option1Value, option2Name, option2Value, option3Name, option3Value)`,
         { count: 'exact' },
       )
-      .is('deletedAt', null)
-      .eq('variants.isActive', true);
+      .is('deletedAt', null);
 
     // Public callers always get active products unless explicitly filtered (admin)
     if (isActive !== undefined) {

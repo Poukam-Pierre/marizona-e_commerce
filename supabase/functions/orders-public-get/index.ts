@@ -28,7 +28,7 @@ import {
 } from '../_shared/rate-limit.ts';
 
 const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
 // ---------------------------------------------------------------------------
 // Hash helper
@@ -79,8 +79,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (!rlResult.allowed) return rlErr('Too many requests', 429);
 
-    // Use anon client — the lookup_token IS NOT NULL policy (migration 20260529)
-    // already allows reading the row
+    // Use anon key — RLS policy "public_read_orders_by_lookup_token" (migration
+    // 20260529) gates SELECT on lookupToken IS NOT NULL AND lookupTokenExpiry > now().
+    // The function further validates the exact SHA-256 hash match, so only the
+    // caller who received the original raw token can retrieve the order.
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let query = supabase

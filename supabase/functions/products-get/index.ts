@@ -27,7 +27,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL     = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
 /** Columns to select on every product-get request (includes relations). */
 const PRODUCT_SELECT = `
@@ -95,6 +95,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     // Database query
     // -------------------------------------------------------------------------
+    // Use anon key — RLS policy "public_read_active_products" (migration 20260528)
+    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let dbQuery = supabase

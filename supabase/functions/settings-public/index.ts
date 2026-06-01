@@ -1,18 +1,19 @@
 /**
  * settings-public — GET /functions/v1/settings-public
  *
- * Public endpoint. Returns all settings where category = 'public'.
- * Values are JSON-parsed and returned as a flat key→value map.
+                                                                                                                                                                                         * Public endpoint. Returns settings from the 'general' and 'store' categories
+ * (storefront-relevant configuration). Values are JSON-parsed and returned as
+ * a flat key→value map.
  * Cache: 300 s.
  *
  * Query parameters (optional):
- *   key  string   Return a single setting by key (must be in 'public' category).
- *
+ *   key  string   Return a single setting by key (must be in 'general' or 'store' category).
+ *                                                                                  
  * Response shape:
  *   { data: { storeName: "ShopPk", currency: "XAF", ... } }
  *
  * or for a single key:
- *   { data: { key: "storeName", value: "ShopPk", category: "public", ... } }
+ *   { data: { key: "storeName", value: "ShopPk", category: "general", ... } }
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -31,8 +32,8 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_URL              = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
 const CACHE_NAMESPACE   = 'settings:public';
 const CACHE_KEY_ALL     = `${CACHE_NAMESPACE}:all`;
@@ -62,6 +63,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
     const key = url.searchParams.get('key')?.trim();
 
+    // Use anon key — RLS policy "public_read_public_settings" (migration 20260528,
+    // updated 20260601) enforces category IN ('general','store') at the DB level
+    // as defense-in-depth. Function further filters to the same categories.
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // =========================================================================
@@ -89,7 +93,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         .from('settings')
         .select('id, key, value, category, createdAt, updatedAt')
         .eq('key', key)
-        .eq('category', 'public')  // RLS also enforces this; belt-and-suspenders
+        .in('category', ['general', 'store'])  // RLS also enforces this; belt-and-suspenders
         .maybeSingle();
 
       if (error) {
@@ -126,7 +130,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { data: settings, error } = await supabase
       .from('settings')
       .select('key, value')
-      .eq('category', 'public')
+      .in('category', ['general', 'store'])
       .order('key', { ascending: true });
 
     if (error) {

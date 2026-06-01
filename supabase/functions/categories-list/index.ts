@@ -31,7 +31,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
 // ---------------------------------------------------------------------------
 // Handler
@@ -47,6 +47,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const slug = url.searchParams.get('slug')?.trim();
     const tree = url.searchParams.get('tree') === 'true';
 
+    // Use anon key — RLS policy "public_read_active_categories" (migration 20260528)
+    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // =========================================================================

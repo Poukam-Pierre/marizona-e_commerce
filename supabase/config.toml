@@ -22,6 +22,58 @@ major_version = 15
 port = 54323
 
 # Per-function settings. verify_jwt defaults to true for all functions.
-# Override per function as needed:
-# [functions.my-public-function]
-# verify_jwt = false
+# We disable gateway-level JWT verification for ALL functions because each
+# function performs its own auth via authenticate() / requireRole() in
+# _shared/auth.ts. This avoids double-verification and prevents the gateway
+# from rejecting requests with UNAUTHORIZED_INVALID_JWT_FORMAT before the
+# function code even runs.
+[functions.health]
+verify_jwt = false
+
+[functions.products-list]
+verify_jwt = false
+
+[functions.products-get]
+verify_jwt = false
+
+[functions.products-create]
+verify_jwt = false
+
+[functions.products-update]
+verify_jwt = false
+
+[functions.products-delete]
+verify_jwt = false
+
+[functions.categories-list]
+verify_jwt = false
+
+[functions.categories-create]
+verify_jwt = false
+
+[functions.categories-update]
+verify_jwt = false
+
+[functions.categories-delete]
+verify_jwt = false
+
+[functions.checkout-create-order]
+verify_jwt = false
+
+[functions.orders-list-admin]
+verify_jwt = false
+
+[functions.orders-public-get]
+verify_jwt = false
+
+[functions.orders-whatsapp-link]
+verify_jwt = false
+
+[functions.orders-download-item]
+verify_jwt = false
+
+[functions.dashboard-stats]
+verify_jwt = false
+
+[functions.settings-public]
+verify_jwt = false
