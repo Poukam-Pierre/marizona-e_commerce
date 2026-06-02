@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { RedisService } from '../../common/services/redis.service';
-import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { PushNotificationService } from '../notifications/push-notification.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -23,7 +22,6 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private redisService: RedisService,
-    private notificationsGateway: NotificationsGateway,
     private pushNotificationService: PushNotificationService,
   ) {}
 
@@ -344,21 +342,6 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product created: ${product.sku}`);
-
-    // Emit real-time notification for new product
-    this.notificationsGateway.emitProductCreated({
-      type: 'product.created',
-      product: {
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        price: product.price,
-        image: product.image || undefined,
-        categoryId: product.categoryId || undefined,
-        categoryName: product.category?.name,
-      },
-      timestamp: new Date(),
-    });
 
     // Send push notification to all subscribed users (background/PWA)
     try {
