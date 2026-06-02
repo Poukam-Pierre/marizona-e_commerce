@@ -147,9 +147,20 @@ class ApiService {
       });
     }
     const query = searchParams.toString();
-    return this.fetch<PaginatedResponse<Product>>(
-      `/products-list${query ? `?${query}` : ''}`,
-    );
+    const token = await this.getValidToken();
+    // products-list returns { data: [...], meta: {...} } at the top level.
+    // Must NOT use this.fetch() which strips meta via data.data unwrap.
+    const response = await fetch(`${API_URL}/products-list${query ? `?${query}` : ''}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || `HTTP error ${response.status}`, response.status);
+    }
+    return response.json() as Promise<PaginatedResponse<Product>>;
   }
 
   async getProduct(id: string): Promise<Product> {
@@ -216,9 +227,20 @@ class ApiService {
       });
     }
     const query = searchParams.toString();
-    return this.fetch<PaginatedResponse<Order>>(
-      `/orders-list-admin${query ? `?${query}` : ''}`,
-    );
+    const token = await this.getValidToken();
+    // orders-list-admin returns { data: [...], meta: {...} } at top level.
+    // Must NOT use this.fetch() which strips meta via data.data unwrap.
+    const response = await fetch(`${API_URL}/orders-list-admin${query ? `?${query}` : ''}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || `HTTP error ${response.status}`, response.status);
+    }
+    return response.json() as Promise<PaginatedResponse<Order>>;
   }
 
   async getOrder(id: string): Promise<Order> {

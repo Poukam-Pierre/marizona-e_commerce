@@ -52,10 +52,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     setUserMenuAnchor(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleUserMenuClose();
-    logout();
-    window.location.href = '/login';
+    try {
+      await logout();
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   return (
