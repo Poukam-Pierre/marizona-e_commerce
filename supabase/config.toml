@@ -77,3 +77,21 @@ verify_jwt = false
 
 [functions.settings-public]
 verify_jwt = false
+
+[functions.orders-update]
+verify_jwt = false
+
+[functions.settings-list]
+verify_jwt = false
+
+[functions.settings-upsert]
+verify_jwt = false
+
+[functions.settings-bulk]
+verify_jwt = false
+
+[functions.settings-update]
+verify_jwt = false
+
+[functions.settings-delete]
+verify_jwt = false
