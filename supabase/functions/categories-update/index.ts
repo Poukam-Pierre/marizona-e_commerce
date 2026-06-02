@@ -101,6 +101,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!existing) return errorResponse(`Category with id "${id}" not found`, 404);
 
     const { slug, parentId, ...rest } = body;
+    const normalizedParentId =
+      typeof parentId === 'string' ? (parentId.trim() || null) : parentId;
 
     // Slug uniqueness
     if (slug && slug !== existing.slug) {
@@ -116,20 +118,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // Parent validation
-    if (parentId !== undefined) {
-      if (parentId === id) return errorResponse('Cannot set category as its own parent', 400);
+    if (normalizedParentId !== undefined) {
+      if (normalizedParentId === id) return errorResponse('Cannot set category as its own parent', 400);
 
-      if (parentId !== null) {
+      if (normalizedParentId !== null) {
         const { data: parent } = await admin
           .from('categories')
           .select('id')
-          .eq('id', parentId)
+          .eq('id', normalizedParentId)
           .is('deletedAt', null)
           .maybeSingle();
 
-        if (!parent) return errorResponse(`Parent category "${parentId}" not found`, 404);
+        if (!parent) return errorResponse(`Parent category "${normalizedParentId}" not found`, 404);
 
-        const isCircular = await checkCircularReference(id, parentId, admin);
+        const isCircular = await checkCircularReference(id, normalizedParentId, admin);
         if (isCircular) {
           return errorResponse('Circular reference detected in category hierarchy', 400);
         }
@@ -142,14 +144,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .update({
         ...rest,
         ...(slug     !== undefined && { slug }),
-        ...(parentId !== undefined && { parentId }),
+        ...(normalizedParentId !== undefined && { parentId: normalizedParentId }),
         updatedAt: new Date().toISOString(),
       })
       .eq('id', id)
       .select(`
         id, name, slug, description, image, order, isActive,
-        metaTitle, metaDescription, createdAt, updatedAt, parentId,
-        parent:categories!parentId(id, name, slug)
+        metaTitle, metaDescription, createdAt, updatedAt, parentId
       `)
       .single();
 
@@ -158,13 +159,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return errorResponse('Failed to update category', 500);
     }
 
+    // Fetch parent relation separately
+    let result = updated as any;
+    if (updated.parentId) {
+      const { data: parent } = await admin
+        .from('categories')
+        .select('id, name, slug')
+        .eq('id', updated.parentId)
+        .maybeSingle();
+      result.parent = parent;
+    } else {
+      result.parent = null;
+    }
+
     // Invalidate cache
     await Promise.all([
       invalidateNamespace(CACHE_NAMESPACES.CATEGORIES_LIST),
       invalidateNamespace(CACHE_NAMESPACES.CATEGORIES_TREE),
     ]);
 
-    return jsonResponse({ data: updated });
+    return jsonResponse({ data: result });
 
   } catch (err) {
     console.error('[categories-update] Unexpected error:', err);

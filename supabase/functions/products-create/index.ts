@@ -47,7 +47,7 @@ import {
   invalidateNamespace,
   CACHE_NAMESPACES,
 } from '../_shared/cache.ts';
-import { validateRequired } from '../_shared/validation.ts';
+import { generateCuid, validateRequired } from '../_shared/validation.ts';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -120,6 +120,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Business rules — check uniqueness via service-role client
     // -------------------------------------------------------------------------
     const admin = createAdminClient();
+    const productId = generateCuid();
 
     const [skuCheck, slugCheck] = await Promise.all([
       admin.from('products').select('id, deletedAt').eq('sku', sku).maybeSingle(),
@@ -139,10 +140,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const primaryImageUrl = Array.isArray(images)
       ? (images.find((img: any) => img.isPrimary) ?? images[0])?.url
       : undefined;
+    const now = new Date().toISOString();
 
     const { data: product, error: insertError } = await admin
       .from('products')
       .insert({
+        id: productId,
         sku, name, slug, description: description ?? null, type, price,
         comparePrice: comparePrice ?? null,
         costPrice: costPrice ?? null,
@@ -161,6 +164,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         isActive, isFeatured, isBestSeller,
         metaTitle: metaTitle ?? null,
         metaDescription: metaDescription ?? null,
+        createdAt: now,
+        updatedAt: now,
       })
       .select('id, sku, name, slug')
       .single();
@@ -175,6 +180,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     if (images.length > 0) {
       const imageRows = images.map((img: any, idx: number) => ({
+        id: generateCuid(),
         productId: product.id,
         url: img.url,
         alt: img.alt ?? name,
@@ -194,6 +200,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     if (variants.length > 0) {
       const variantRows = variants.map((v: any) => ({
+        id: generateCuid(),
         productId: product.id,
         sku: v.sku,
         name: v.name,

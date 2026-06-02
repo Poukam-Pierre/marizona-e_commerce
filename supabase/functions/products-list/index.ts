@@ -21,6 +21,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
+  authenticate,
+  requireRole,
+  createAdminClient,
+  AdminRole,
+} from '../_shared/auth.ts';
+import {
   jsonResponse,
   errorResponse,
   corsResponse,
@@ -132,8 +138,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
       sortOrder: rawSortOrder,
     };
 
+    // Detect admin: valid MANAGER+ token → use service-role client (bypasses RLS)
+    // so inactive products are visible. Public path stays on anon key.
+    let isAdminView = false;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { user } = await authenticate(req, userClient);
+      if (user) {
+        const roleCheck = requireRole(user, AdminRole.MANAGER);
+        isAdminView = !roleCheck.error;
+      }
+    }
+
     const cacheKey = await buildCacheKey(CACHE_NAMESPACES.PRODUCTS_LIST, queryParams);
-    const cached = await getCached<unknown>(cacheKey);
+    // Never serve/write cache for admin views — they may include inactive products
+    const cached = isAdminView ? null : await getCached<unknown>(cacheKey);
     if (cached) {
       return new Response(JSON.stringify(cached), {
         status: 200,
@@ -150,9 +172,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     // Query database
     // -------------------------------------------------------------------------
-    // Use anon key — RLS policy "public_read_active_products" (migration 20260528)
-    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Admin requests use service-role to bypass RLS (allows inactive products).
+    // Public requests use anon key — RLS enforces isActive=true as defense-in-depth.
+    const supabase = isAdminView ? createAdminClient() : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const offset = (page - 1) * limit;
 
@@ -173,10 +195,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       )
       .is('deletedAt', null);
 
-    // Public callers always get active products unless explicitly filtered (admin)
+    // Admins can filter freely; public callers always see only active products
     if (isActive !== undefined) {
       query = query.eq('isActive', isActive);
-    } else {
+    } else if (!isAdminView) {
       query = query.eq('isActive', true);
     }
 
@@ -220,9 +242,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const responsePayload = { data: products, meta };
 
     // -------------------------------------------------------------------------
-    // Cache result
+    // Cache result (public only — never cache admin views)
     // -------------------------------------------------------------------------
-    await setCache(cacheKey, responsePayload, CACHE_TTL.PRODUCTS, CACHE_NAMESPACES.PRODUCTS_LIST);
+    if (!isAdminView) {
+      await setCache(cacheKey, responsePayload, CACHE_TTL.PRODUCTS, CACHE_NAMESPACES.PRODUCTS_LIST);
+    }
 
     return new Response(JSON.stringify(responsePayload), {
       status: 200,

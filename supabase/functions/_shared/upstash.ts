@@ -88,6 +88,11 @@ export async function redisGet(key: string): Promise<string | null> {
 /**
  * `SETEX <key> <ttl> <value>` — set a string value with a TTL in seconds.
  * Returns true on success.
+ *
+ * NOTE: Upstash REST API stores the POST body as a raw string (no JSON parsing).
+ * We must NOT use restPost() here (which wraps body in JSON.stringify), as that
+ * would double-encode the value and cause getCached() to return a string instead
+ * of the original parsed value.
  */
 export async function redisSetEx(
   key: string,
@@ -96,12 +101,21 @@ export async function redisSetEx(
 ): Promise<boolean> {
   const cfg = getConfig();
   if (!cfg) return false;
-  const result = await restPost<string>(
-    cfg,
-    `/setex/${encodeURIComponent(key)}/${ttlSeconds}`,
-    value,
-  );
-  return result === 'OK';
+  try {
+    const res = await fetch(
+      `${cfg.url}/setex/${encodeURIComponent(key)}/${ttlSeconds}`,
+      {
+        method: 'POST',
+        headers: authHeader(cfg.token),
+        body: value, // raw string — Upstash stores this as-is
+      },
+    );
+    if (!res.ok) return false;
+    const json = await res.json();
+    return json.result === 'OK';
+  } catch {
+    return false;
+  }
 }
 
 /**

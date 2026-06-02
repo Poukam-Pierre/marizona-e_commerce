@@ -15,6 +15,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
+  authenticate,
+  requireRole,
+  createAdminClient,
+  AdminRole,
+} from '../_shared/auth.ts';
+import {
   jsonResponse,
   errorResponse,
   corsResponse,
@@ -47,9 +53,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const slug = url.searchParams.get('slug')?.trim();
     const tree = url.searchParams.get('tree') === 'true';
 
-    // Use anon key — RLS policy "public_read_active_categories" (migration 20260528)
-    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Admin detection: MANAGER+ JWT → service-role client bypasses RLS so that
+    // inactive categories and ALL products (including inactive) are counted correctly.
+    // Public requests stay on anon key — RLS enforces active-only as defense-in-depth.
+    let isAdminView = false;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { user } = await authenticate(req, userClient);
+      if (user) {
+        const roleCheck = requireRole(user, AdminRole.MANAGER);
+        isAdminView = !roleCheck.error;
+      }
+    }
+    const supabase = isAdminView ? createAdminClient() : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // =========================================================================
     // Single category lookup
@@ -172,26 +191,46 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { data, error } = await supabase
+    let flatQuery = supabase
       .from('categories')
       .select(`
         id, name, slug, description, image, order,
         isActive, metaTitle, metaDescription, createdAt, updatedAt, parentId,
-        parent:categories!parentId(id, name, slug)
+        productCount:products!categoryId(count),
+        childCount:categories!parentId(count)
       `)
       .is('deletedAt', null)
-      .eq('isActive', true)
       .order('order', { ascending: true })
       .order('name', { ascending: true });
+
+    // Public: active categories only. Admin: all categories.
+    if (!isAdminView) {
+      flatQuery = flatQuery.eq('isActive', true);
+    }
+
+    const { data: rawData, error } = await flatQuery;
 
     if (error) {
       console.error('[categories-list] DB error (flat):', error.message);
       return errorResponse('Failed to fetch categories', 500);
     }
 
-    await setCache(
-      cacheKey, data, CACHE_TTL.CATEGORIES, CACHE_NAMESPACES.CATEGORIES_LIST,
-    );
+    // PostgREST returns count relations as [{ count: N }].
+    // Reshape to _count: { products, children } to match the frontend type.
+    const data = (rawData as any[]).map(({ productCount, childCount, ...cat }) => ({
+      ...cat,
+      _count: {
+        products: productCount?.[0]?.count ?? 0,
+        children: childCount?.[0]?.count ?? 0,
+      },
+    }));
+
+    // Never cache admin views — they include inactive categories/products
+    if (!isAdminView) {
+      await setCache(
+        cacheKey, data, CACHE_TTL.CATEGORIES, CACHE_NAMESPACES.CATEGORIES_LIST,
+      );
+    }
     return jsonResponse({ data });
 
   } catch (err) {

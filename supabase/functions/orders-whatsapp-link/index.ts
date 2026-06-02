@@ -115,25 +115,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .join('\n');
 
     const message =
-`Halo, saya ingin memesan:
+`Hello, I would like to place an order:
 
 📄 *Order ID:* ${order.orderNumber}
 
-📦 *Item Pesanan:*
+📦 *Order Items:*
 ${itemLines}
 
 💰 *Subtotal:* ${formatPrice(order.subtotal)}
-🚚 *Ongkir:* ${formatPrice(order.shippingCost)}
+🚚 *Shipping:* ${formatPrice(order.shippingCost)}
 💸 *Total:* ${formatPrice(order.total)}
 
-👤 *Nama:* ${order.shippingName}
-📱 *Telepon:* ${order.shippingPhone}
-📍 *Alamat:*
+👤 *Name:* ${order.shippingName}
+📱 *Phone:* ${order.shippingPhone}
+📍 *Address:*
 ${order.shippingAddress}
 ${order.shippingCity}, ${order.shippingProvince}${order.shippingPostalCode ? ' ' + order.shippingPostalCode : ''}
-${order.shippingCountry}${order.customerNotes ? `\n\n📝 *Catatan:* ${order.customerNotes}` : ''}
+${order.shippingCountry}${order.customerNotes ? `\n\n📝 *Notes:* ${order.customerNotes}` : ''}
 
-Mohon konfirmasi pesanan saya. Terima kasih! 🙏`;
+Please confirm my order. Thank you! 🙏`;
 
     const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 

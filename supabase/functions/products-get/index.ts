@@ -11,6 +11,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
+  authenticate,
+  requireRole,
+  createAdminClient,
+  AdminRole,
+} from '../_shared/auth.ts';
+import {
   jsonResponse,
   errorResponse,
   corsResponse,
@@ -68,6 +74,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return errorResponse('Either id or slug query parameter is required', 400);
     }
 
+    // Treat as public by default. If a valid MANAGER+ token is provided,
+    // allow reading inactive products (admin detail page use case).
+    let isAdminView = false;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { user } = await authenticate(req, userClient);
+      if (user) {
+        const roleCheck = requireRole(user, AdminRole.MANAGER);
+        isAdminView = !roleCheck.error;
+      }
+    }
+
     // -------------------------------------------------------------------------
     // Cache lookup
     // -------------------------------------------------------------------------
@@ -78,36 +99,44 @@ Deno.serve(async (req: Request): Promise<Response> => {
       cacheKey = `${CACHE_NAMESPACES.PRODUCTS_SLUG}:${slug}`;
     }
 
-    const cached = await getCached<unknown>(cacheKey);
-    if (cached) {
-      return new Response(JSON.stringify({ data: cached }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-          'X-Cache': 'HIT',
-        },
-      });
+    // Cache is public-only; never serve/cache admin-only inactive views.
+    if (!isAdminView) {
+      const cached = await getCached<unknown>(cacheKey);
+      if (cached) {
+        return new Response(JSON.stringify({ data: cached }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+            'X-Cache': 'HIT',
+          },
+        });
+      }
     }
 
     // -------------------------------------------------------------------------
     // Database query
     // -------------------------------------------------------------------------
-    // Use anon key — RLS policy "public_read_active_products" (migration 20260528)
-    // enforces isActive=true AND deletedAt IS NULL at the DB level as defense-in-depth.
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Public requests use anon key (subject to RLS — active products only).
+    // Admin requests use service-role client to bypass RLS so inactive products
+    // are visible in the admin detail page.
+    const supabase = isAdminView ? createAdminClient() : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let dbQuery = supabase
       .from('products')
       .select(PRODUCT_SELECT)
       .is('deletedAt', null)
-      .eq('isActive', true)
-      // Only return active variants
-      .eq('variants.isActive', true)
       // Images sorted by display order
       .order('order', { referencedTable: 'product_images', ascending: true });
+
+    // Public requests can only see active products/variants.
+    if (!isAdminView) {
+      dbQuery = dbQuery
+        .eq('isActive', true)
+        .eq('variants.isActive', true);
+    }
 
     if (id) {
       dbQuery = dbQuery.eq('id', id);
@@ -132,18 +161,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     // Cache result — track under both id and slug namespaces
     // -------------------------------------------------------------------------
-    await setCache(
-      `${CACHE_NAMESPACES.PRODUCTS_ID}:${data.id}`,
-      data,
-      CACHE_TTL.PRODUCTS,
-      CACHE_NAMESPACES.PRODUCTS_ID,
-    );
-    await setCache(
-      `${CACHE_NAMESPACES.PRODUCTS_SLUG}:${data.slug}`,
-      data,
-      CACHE_TTL.PRODUCTS,
-      CACHE_NAMESPACES.PRODUCTS_SLUG,
-    );
+    if (!isAdminView) {
+      await setCache(
+        `${CACHE_NAMESPACES.PRODUCTS_ID}:${data.id}`,
+        data,
+        CACHE_TTL.PRODUCTS,
+        CACHE_NAMESPACES.PRODUCTS_ID,
+      );
+      await setCache(
+        `${CACHE_NAMESPACES.PRODUCTS_SLUG}:${data.slug}`,
+        data,
+        CACHE_TTL.PRODUCTS,
+        CACHE_NAMESPACES.PRODUCTS_SLUG,
+      );
+    }
 
     return jsonResponse({ data });
   } catch (err) {

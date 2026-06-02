@@ -32,6 +32,7 @@ import {
   invalidateKey,
   CACHE_NAMESPACES,
 } from '../_shared/cache.ts';
+import { generateCuid } from '../_shared/validation.ts';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -101,7 +102,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // -------------------------------------------------------------------------
     // Uniqueness checks for SKU / slug changes
     // -------------------------------------------------------------------------
-    const { sku, slug, images, variants, categoryId, ...scalarFields } = body as Record<string, any>;
+    const { sku, slug, images, variants, categoryId: rawCategoryId, ...scalarFields } = body as Record<string, any>;
+    // Normalize categoryId: empty string → null (same pattern as categories parentId)
+    const categoryId =
+      typeof rawCategoryId === 'string'
+        ? (rawCategoryId.trim() || null)
+        : (rawCategoryId ?? undefined);
 
     if (sku && sku !== existing.sku) {
       const { data: skuConflict } = await admin
@@ -126,24 +132,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // -------------------------------------------------------------------------
-    // Update scalar fields
+    // Update scalar fields (chained .select() for atomic update+return like categories-update)
     // -------------------------------------------------------------------------
     const updateData: Record<string, unknown> = {
       ...scalarFields,
-      ...(sku         !== undefined && { sku }),
-      ...(slug        !== undefined && { slug }),
-      ...(categoryId  !== undefined && { categoryId }),
+      ...(sku        !== undefined && { sku }),
+      ...(slug       !== undefined && { slug }),
+      ...(categoryId !== undefined && { categoryId }),
       updatedAt: new Date().toISOString(),
     };
 
     const { error: updateError } = await admin
       .from('products')
       .update(updateData)
-      .eq('id', id);
+      .eq('id', id)
+      .select('id')
+      .single();
 
     if (updateError) {
-      console.error('[products-update] update error:', updateError.message);
-      return errorResponse('Failed to update product', 500);
+      console.error('[products-update] update error:', updateError.message, updateError.details, updateError.hint);
+      return errorResponse(`Failed to update product: ${updateError.message}`, 500);
     }
 
     // -------------------------------------------------------------------------
@@ -172,6 +180,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           }).eq('id', img.id);
         } else {
           await admin.from('product_images').insert({
+            id: generateCuid(),
             productId: id,
             url: img.url,
             alt: img.alt ?? existing.slug,
@@ -212,16 +221,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (variantId) {
           await admin.from('product_variants').update(variantData).eq('id', variantId);
         } else {
-          await admin.from('product_variants').insert({ productId: id, ...variantData });
+          await admin.from('product_variants').insert({
+            id: generateCuid(),
+            productId: id,
+            ...variantData,
+          });
         }
       }
     }
 
     // -------------------------------------------------------------------------
-    // Cache invalidation
+    // Cache invalidation — products AND categories (counts change with isActive)
     // -------------------------------------------------------------------------
     await Promise.all([
       invalidateNamespace(CACHE_NAMESPACES.PRODUCTS_LIST),
+      invalidateNamespace(CACHE_NAMESPACES.CATEGORIES_LIST),
+      invalidateNamespace(CACHE_NAMESPACES.CATEGORIES_TREE),
       invalidateKey(`${CACHE_NAMESPACES.PRODUCTS_ID}:${id}`),
       invalidateKey(`${CACHE_NAMESPACES.PRODUCTS_SLUG}:${existing.slug}`),
       ...(slug ? [invalidateKey(`${CACHE_NAMESPACES.PRODUCTS_SLUG}:${slug}`)] : []),

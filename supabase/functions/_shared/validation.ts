@@ -68,6 +68,22 @@ export function validateUuid(id: string): boolean {
 }
 
 /**
+ * Generate a Prisma-like CUID string for environments where DB defaults are
+ * missing and IDs must be provided explicitly on insert.
+ */
+export function generateCuid(): string {
+  const timestamp = Date.now().toString(36);
+  const randomBytes = crypto.getRandomValues(new Uint8Array(20));
+  let random = '';
+
+  for (const b of randomBytes) {
+    random += (b % 36).toString(36);
+  }
+
+  return `c${(timestamp + random).slice(0, 24)}`;
+}
+
+/**
  * Return true when `value` is a finite positive number.
  */
 export function validatePositiveNumber(value: unknown): value is number {
