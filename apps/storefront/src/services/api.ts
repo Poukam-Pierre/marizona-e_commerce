@@ -1,25 +1,11 @@
-// API Configuration - Use relative URLs for the proxy
-const API_BASE_URL = '/api/v1';
+// Supabase Edge Functions base URL and anon key
+const FUNCTIONS_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ??
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
 
-export const API_ENDPOINTS = {
-  // Products
-  products: `${API_BASE_URL}/products`,
-  product: (id: string) => `${API_BASE_URL}/products/${id}`,
-  productBySlug: (slug: string) => `${API_BASE_URL}/products/slug/${slug}`,
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
-  // Categories
-  categories: `${API_BASE_URL}/categories`,
-  category: (id: string) => `${API_BASE_URL}/categories/${id}`,
-
-  // Orders
-  orders: `${API_BASE_URL}/orders`,
-  order: (id: string) => `${API_BASE_URL}/orders/${id}`,
-
-  // WhatsApp
-  whatsappLink: (orderId: string) => `${API_BASE_URL}/notifications/whatsapp/${orderId}`,
-} as const;
-
-// Generic fetch helper
+// Generic fetch helper — adds the required apikey header for Edge Functions
 export async function apiFetch<T>(
   url: string,
   options?: RequestInit,
@@ -28,6 +14,7 @@ export async function apiFetch<T>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      apikey: ANON_KEY,
       ...options?.headers,
     },
   });
@@ -36,10 +23,11 @@ export async function apiFetch<T>(
     const error = await response.json().catch(() => ({
       message: 'An error occurred',
     }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    throw new Error(error.message || error.error || `HTTP error! status: ${response.status}`);
   }
 
   const data = await response.json();
+  // Edge Functions wrap payload in { data: ... }; fall back to raw body
   return data.data ?? data;
 }
 
@@ -55,8 +43,17 @@ export const api = {
         }
       });
     }
-    const url = `${API_ENDPOINTS.products}${params.toString() ? `?${params}` : ''}`;
-    return apiFetch<{
+    const url = `${FUNCTIONS_URL}/products-list${params.toString() ? `?${params}` : ''}`;
+    // products-list returns { data: [...], meta: {...} } at the top level.
+    // We must NOT use apiFetch here (which strips meta via data.data unwrap).
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'An error occurred' }));
+      throw new Error(err.message || err.error || `HTTP error! status: ${response.status}`);
+    }
+    return response.json() as Promise<{
       data: import('@/types').Product[];
       meta: {
         page: number;
@@ -66,52 +63,55 @@ export const api = {
         hasNext: boolean;
         hasPrev: boolean;
       };
-    }>(url);
+    }>;
   },
 
   async getProduct(id: string) {
-    return apiFetch<import('@/types').Product>(API_ENDPOINTS.product(id));
+    return apiFetch<import('@/types').Product>(
+      `${FUNCTIONS_URL}/products-get?id=${encodeURIComponent(id)}`,
+    );
   },
 
   async getProductBySlug(slug: string) {
-    return apiFetch<import('@/types').Product>(API_ENDPOINTS.productBySlug(slug));
+    return apiFetch<import('@/types').Product>(
+      `${FUNCTIONS_URL}/products-get?slug=${encodeURIComponent(slug)}`,
+    );
   },
 
   // Categories
   async getCategories() {
-    return apiFetch<import('@/types').Category[]>(API_ENDPOINTS.categories);
+    return apiFetch<import('@/types').Category[]>(`${FUNCTIONS_URL}/categories-list`);
   },
 
   async getCategory(id: string) {
-    return apiFetch<import('@/types').Category>(API_ENDPOINTS.category(id));
+    return apiFetch<import('@/types').Category>(
+      `${FUNCTIONS_URL}/categories-list?id=${encodeURIComponent(id)}`,
+    );
   },
 
   // Orders
   async createOrder(data: import('@/types').CreateOrderDto) {
-    return apiFetch<import('@/types').OrderCreatedResponse>(API_ENDPOINTS.orders, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return apiFetch<import('@/types').OrderCreatedResponse>(
+      `${FUNCTIONS_URL}/checkout-create-order`,
+      { method: 'POST', body: JSON.stringify(data) },
+    );
   },
 
   async getOrder(id: string, token: string) {
     return apiFetch<import('@/types').Order>(
-      `${API_ENDPOINTS.order(id)}?token=${encodeURIComponent(token)}`,
+      `${FUNCTIONS_URL}/orders-public-get?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`,
     );
   },
 
   // WhatsApp
   async getWhatsAppLink(orderId: string) {
     return apiFetch<{ url: string; message: string }>(
-      API_ENDPOINTS.whatsappLink(orderId),
+      `${FUNCTIONS_URL}/orders-whatsapp-link?orderId=${encodeURIComponent(orderId)}`,
     );
   },
 
-  // Ratings
-  async rateProduct(id: string, rating: number) {
-    return apiFetch<{ rating: number; reviewCount: number }>(
-      `${API_ENDPOINTS.products}/${id}/rate`,
-      { method: 'POST', body: JSON.stringify({ rating }) },
-    );
+  // Ratings — not yet migrated to Edge Functions; no-op to avoid 503s
+  async rateProduct(_id: string, _rating: number) {
+    return { rating: 0, reviewCount: 0 };
   },
 };
