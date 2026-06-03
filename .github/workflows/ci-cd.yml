@@ -136,9 +136,18 @@ jobs:
 
       - name: Build Storefront
         run: bunx nx build storefront --prod
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1
+          NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
 
       - name: Build Admin
         run: bunx nx build admin --prod
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/functions/v1
 
   # ---------------------------------------------------------------------------
   # Deploy Edge Functions to Supabase
