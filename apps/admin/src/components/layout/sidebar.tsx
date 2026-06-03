@@ -154,11 +154,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               bgcolor: 'primary.main',
             }}
           >
-            {user?.name?.charAt(0).toUpperCase() || 'A'}
+            {(user?.user_metadata?.name ?? user?.email)
+              ?.charAt(0)
+              .toUpperCase() || 'A'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" fontWeight={600} noWrap>
-              {user?.name || 'Admin'}
+              {user?.user_metadata?.name ?? user?.email ?? 'Admin'}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
               {user?.role || 'Admin'}
