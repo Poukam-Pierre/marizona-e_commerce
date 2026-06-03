@@ -1,5 +1,5 @@
 // Supabase Edge Functions base URL and anon key
-const FUNCTIONS_URL =
+export const FUNCTIONS_URL =
   process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ??
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
 
@@ -104,9 +104,9 @@ export const api = {
   },
 
   // WhatsApp
-  async getWhatsAppLink(orderId: string) {
+  async getWhatsAppLink(orderId: string, lookupToken: string) {
     return apiFetch<{ url: string; message: string }>(
-      `${FUNCTIONS_URL}/orders-whatsapp-link?orderId=${encodeURIComponent(orderId)}`,
+      `${FUNCTIONS_URL}/orders-whatsapp-link?id=${encodeURIComponent(orderId)}&token=${encodeURIComponent(lookupToken)}`,
     );
   },
 

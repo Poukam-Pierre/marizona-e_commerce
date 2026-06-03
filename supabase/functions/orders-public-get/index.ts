@@ -79,11 +79,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (!rlResult.allowed) return rlErr('Too many requests', 429);
 
-    // Use anon key — RLS policy "public_read_orders_by_lookup_token" (migration
-    // 20260529) gates SELECT on lookupToken IS NOT NULL AND lookupTokenExpiry > now().
-    // The function further validates the exact SHA-256 hash match, so only the
-    // caller who received the original raw token can retrieve the order.
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Use service-role key so RLS cannot accidentally broaden access.
+    // Token-gating is enforced by the exact hash match + expiry checks below.
+    const supabase = createClient(
+      SUPABASE_URL,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
 
     let query = supabase
       .from('orders')

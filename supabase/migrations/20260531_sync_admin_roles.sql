@@ -167,6 +167,40 @@ END;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- 6. Fix RLS policies that previously compared auth.uid() (UUID) to
+--    admin_users.id (CUID) — those comparisons never match. Now that authId
+--    exists as the UUID bridge column, update both policies to use it.
+-- ---------------------------------------------------------------------------
+
+-- admin_users: each admin can read their own record by authId
+DROP POLICY IF EXISTS "admin_users_read_own" ON admin_users;
+CREATE POLICY "admin_users_read_own"
+  ON admin_users
+  FOR SELECT
+  USING (auth.uid() = "authId");
+
+-- admin_sessions: each admin can manage their own sessions via authId join
+DROP POLICY IF EXISTS "admin_sessions_own" ON admin_sessions;
+CREATE POLICY "admin_sessions_own"
+  ON admin_sessions FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM admin_users au
+      WHERE au.id = admin_sessions."adminUserId"
+        AND au."authId" = auth.uid()
+        AND au."deletedAt" IS NULL
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM admin_users au
+      WHERE au.id = admin_sessions."adminUserId"
+        AND au."authId" = auth.uid()
+        AND au."deletedAt" IS NULL
+    )
+  );
+
+-- ---------------------------------------------------------------------------
 -- VERIFICATION QUERY (run manually to confirm sync state)
 -- ---------------------------------------------------------------------------
 -- SELECT

@@ -151,7 +151,7 @@ export async function requireAdminRole(
     .from('admin_users')
     .select('role')
     .eq('id', userId)
-    .is('deleted_at', null)
+    .is('deletedAt', null)
     .single();
 
   if (error || !adminUser) {

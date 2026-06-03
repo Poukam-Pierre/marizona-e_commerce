@@ -64,20 +64,52 @@ Deno.serve(async (req: Request): Promise<Response> => {
       : JSON.stringify(body.value ?? null);
 
     const now = new Date().toISOString();
-    const payload = {
-      id: generateCuid(),
-      key,
-      category,
-      value: valueStr,
-      createdAt: now,
-      updatedAt: now,
-    };
 
-    const { data, error } = await admin
+    // Check if setting with this key already exists
+    const { data: existing, error: checkError } = await admin
       .from('settings')
-      .upsert(payload, { onConflict: 'key' })
-      .select('id, key, value, category, createdAt, updatedAt')
-      .single();
+      .select('id, createdAt')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[settings-upsert] Check error:', checkError.message);
+      return errorResponse('Failed to upsert setting', 500);
+    }
+
+    let data, error;
+
+    if (existing) {
+      // UPDATE: preserve id and createdAt, only update value/category/updatedAt
+      const result = await admin
+        .from('settings')
+        .update({
+          category,
+          value: valueStr,
+          updatedAt: now,
+        })
+        .eq('key', key)
+        .select('id, key, value, category, createdAt, updatedAt')
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // INSERT: new setting with full payload
+      const result = await admin
+        .from('settings')
+        .insert({
+          id: generateCuid(),
+          key,
+          category,
+          value: valueStr,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .select('id, key, value, category, createdAt, updatedAt')
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     if (error || !data) {
       console.error('[settings-upsert] DB error:', error?.message);

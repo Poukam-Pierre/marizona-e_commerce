@@ -61,7 +61,7 @@ export function useProductNotifications(
               slug: row['slug'] as string,
               price: row['price'] as number,
               image: row['image'] as string | undefined,
-              categoryId: row['category_id'] as string | undefined,
+              categoryId: row['categoryId'] as string | undefined,
             },
             timestamp: new Date(),
           };
@@ -82,7 +82,7 @@ export function useProductNotifications(
               slug: row['slug'] as string,
               price: row['price'] as number,
               image: row['image'] as string | undefined,
-              categoryId: row['category_id'] as string | undefined,
+              categoryId: row['categoryId'] as string | undefined,
             },
             timestamp: new Date(),
           };

@@ -33,16 +33,15 @@ CREATE POLICY "customers_read_own_orders"
 -- ---------------------------------------------------------------------------
 -- ORDERS: public order lookup via secure token (guest order tracking)
 -- Guests receive a raw token once; only the SHA-256 hash is stored.
--- The Edge Function verifies the token before serving the order data.
--- Edge Function uses service role — this policy covers direct DB access.
+-- The Edge Function (service role) verifies the raw token server-side before
+-- serving any data. Direct PostgREST access is denied (USING false) to prevent
+-- anon clients from reading any order that merely has a non-null lookup token
+-- without proving knowledge of the raw token value.
 -- ---------------------------------------------------------------------------
 CREATE POLICY "public_read_orders_by_lookup_token"
   ON orders
   FOR SELECT
-  USING (
-    "lookupToken" IS NOT NULL
-    AND "lookupTokenExpiry" > now()
-  );
+  USING (false);
 
 -- ---------------------------------------------------------------------------
 -- ORDER ITEMS: customers can read items belonging to their orders
@@ -135,15 +134,13 @@ CREATE POLICY "customers_manage_own_cart"
   );
 
 -- ---------------------------------------------------------------------------
--- PUSH SUBSCRIPTIONS: anyone can subscribe/unsubscribe (endpoint is the key)
--- Optionally scoped to a user when authenticated.
+-- PUSH SUBSCRIPTIONS: anyone can register a new subscription (INSERT only).
+-- SELECT, UPDATE, and DELETE are denied at the DB level — all subscription
+-- management (unsubscribe, lookup) goes through Edge Functions using the
+-- service role. This prevents anon clients from exfiltrating or tampering
+-- with other users' subscription endpoints via direct PostgREST access.
 -- ---------------------------------------------------------------------------
-CREATE POLICY "public_manage_push_subscriptions"
+CREATE POLICY "public_insert_push_subscriptions"
   ON push_subscriptions
-  FOR ALL
-  USING (
-    -- Unauthenticated: only allow access to their own endpoint via exact match
-    -- (Edge Function enforces this; policy allows all for flexibility)
-    true
-  )
+  FOR INSERT
   WITH CHECK (true);

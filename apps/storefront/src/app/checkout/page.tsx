@@ -19,7 +19,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useCart } from '@/providers/cart-provider';
 import { useCreateOrder } from '@/hooks/use-api';
-import { apiFetch } from '@/services/api';
+import { apiFetch, FUNCTIONS_URL } from '@/services/api';
 import { saveRecentOrder } from '@/app/orders/track/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -145,7 +145,7 @@ export default function CheckoutPage() {
 
         // Fetch WhatsApp URL from backend (includes properly formatted message)
         const { url: waUrl } = await apiFetch<{ url: string }>(
-          `${process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL}/orders-whatsapp-link?id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(order.lookupToken)}`,
+          `${FUNCTIONS_URL}/orders-whatsapp-link?id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(order.lookupToken)}`,
         );
 
         setWhatsappUrl(waUrl);

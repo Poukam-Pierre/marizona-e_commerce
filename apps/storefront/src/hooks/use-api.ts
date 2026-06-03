@@ -78,11 +78,9 @@ export function useOrder(id: string, token: string) {
 }
 
 // WhatsApp
-export function useWhatsAppLink(orderId: string) {
-  return useQuery({
-    queryKey: ['whatsapp', orderId],
-    queryFn: () => api.getWhatsAppLink(orderId),
-    enabled: !!orderId,
+export function useWhatsAppLink(orderId: string, lookupToken: string) {
+  return useMutation({
+    mutationFn: () => api.getWhatsAppLink(orderId, lookupToken),
   });
 }
 

@@ -167,7 +167,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (incomingIds.length > 0) {
         deleteQuery = deleteQuery.not('id', 'in', `(${incomingIds.join(',')})`);
       }
-      await deleteQuery;
+      const { error: deleteError } = await deleteQuery;
+      if (deleteError) {
+        console.error('[products-update] image delete error:', deleteError.message);
+        return errorResponse(`Failed to delete old images: ${deleteError.message}`, 500);
+      }
 
       // Upsert images
       for (const [idx, img] of images.entries()) {
@@ -213,7 +217,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (incomingIds.length > 0) {
         deactivateQuery = deactivateQuery.not('id', 'in', `(${incomingIds.join(',')})`);
       }
-      await deactivateQuery;
+      const { error: deactivateError } = await deactivateQuery;
+      if (deactivateError) {
+        console.error('[products-update] variant deactivate error:', deactivateError.message);
+        return errorResponse(`Failed to deactivate removed variants: ${deactivateError.message}`, 500);
+      }
 
       // Upsert variants
       for (const v of variants) {

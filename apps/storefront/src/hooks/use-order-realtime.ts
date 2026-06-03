@@ -50,8 +50,8 @@ export function useOrderRealtime(
           const row = payload.new as Record<string, unknown>;
           const update: OrderRealtimeStatus = {
             status: row['status'] as string,
-            paymentStatus: row['payment_status'] as string,
-            updatedAt: row['updated_at'] as string,
+            paymentStatus: row['paymentStatus'] as string,
+            updatedAt: row['updatedAt'] as string,
           };
           setOrderStatus(update);
           onStatusChange?.(update);
