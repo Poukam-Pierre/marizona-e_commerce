@@ -1,48 +1,31 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { AdminUser, AuthTokens } from '@/types';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface AuthState {
-  user: AdminUser | null;
-  accessToken: string | null;
-  refreshToken: string | null;
+  session: Session | null;
+  user: User | null;
   isAuthenticated: boolean;
   hydrated: boolean;
-  setUser: (user: AdminUser | null) => void;
-  setTokens: (tokens: AuthTokens) => void;
-  setAccessToken: (token: string) => void;
-  logout: () => void;
+  setSession: (session: Session | null) => void;
+  logout: () => Promise<void>;
   setHydrated: (hydrated: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      hydrated: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      setTokens: (tokens) => set({ 
-        accessToken: tokens.accessToken, 
-        refreshToken: tokens.refreshToken 
-      }),
-      setAccessToken: (token) => set({ accessToken: token }),
-      logout: () => set({ 
-        user: null, 
-        accessToken: null, 
-        refreshToken: null, 
-        isAuthenticated: false 
-      }),
-      setHydrated: (hydrated) => set({ hydrated }),
+export const useAuthStore = create<AuthState>()((set) => ({
+  session: null,
+  user: null,
+  isAuthenticated: false,
+  hydrated: false,
+  setSession: (session) =>
+    set({
+      session,
+      user: session?.user ?? null,
+      isAuthenticated: !!session,
     }),
-    {
-      name: 'admin-auth-storage',
-      skipHydration: false,
-      onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
-      },
-    }
-  )
-);
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ session: null, user: null, isAuthenticated: false });
+  },
+  setHydrated: (hydrated) => set({ hydrated }),
+}));

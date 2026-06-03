@@ -52,10 +52,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     setUserMenuAnchor(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleUserMenuClose();
-    logout();
-    window.location.href = '/login';
+    try {
+      await logout();
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -145,7 +148,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                   fontSize: '0.875rem',
                 }}
               >
-                {user?.name?.charAt(0).toUpperCase() || 'A'}
+                {(user?.user_metadata?.name ?? user?.email)
+                  ?.charAt(0)
+                  .toUpperCase() || 'A'}
               </Avatar>
             </IconButton>
 
@@ -158,7 +163,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
             >
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  {user?.name}
+                  {user?.user_metadata?.name ?? user?.email}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {user?.email}

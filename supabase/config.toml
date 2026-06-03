@@ -1,0 +1,97 @@
+# A string used to distinguish different Supabase projects on the same host.
+project_id = "shoppk"
+
+[api]
+# Port to use for the API URL.
+port = 54321
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API endpoints.
+schemas = ["public", "storage", "graphql_public"]
+# Extra schemas to add to the search_path of every request.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a view, table, or stored procedure.
+max_rows = 1000
+
+[db]
+# Port to use for the local database URL.
+port = 54322
+# The database major version to use.
+major_version = 15
+
+[studio]
+# Port to use for Supabase Studio.
+port = 54323
+
+# Per-function settings. verify_jwt defaults to true for all functions.
+# We disable gateway-level JWT verification for ALL functions because each
+# function performs its own auth via authenticate() / requireRole() in
+# _shared/auth.ts. This avoids double-verification and prevents the gateway
+# from rejecting requests with UNAUTHORIZED_INVALID_JWT_FORMAT before the
+# function code even runs.
+[functions.health]
+verify_jwt = false
+
+[functions.products-list]
+verify_jwt = false
+
+[functions.products-get]
+verify_jwt = false
+
+[functions.products-create]
+verify_jwt = false
+
+[functions.products-update]
+verify_jwt = false
+
+[functions.products-delete]
+verify_jwt = false
+
+[functions.categories-list]
+verify_jwt = false
+
+[functions.categories-create]
+verify_jwt = false
+
+[functions.categories-update]
+verify_jwt = false
+
+[functions.categories-delete]
+verify_jwt = false
+
+[functions.checkout-create-order]
+verify_jwt = false
+
+[functions.orders-list-admin]
+verify_jwt = false
+
+[functions.orders-public-get]
+verify_jwt = false
+
+[functions.orders-whatsapp-link]
+verify_jwt = false
+
+[functions.orders-download-item]
+verify_jwt = false
+
+[functions.dashboard-stats]
+verify_jwt = false
+
+[functions.settings-public]
+verify_jwt = false
+
+[functions.orders-update]
+verify_jwt = false
+
+[functions.settings-list]
+verify_jwt = false
+
+[functions.settings-upsert]
+verify_jwt = false
+
+[functions.settings-bulk]
+verify_jwt = false
+
+[functions.settings-update]
+verify_jwt = false
+
+[functions.settings-delete]
+verify_jwt = false

@@ -23,12 +23,12 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useAuthStore } from '@/stores/auth-store';
-import { api } from '@/services/api';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-  const { setTokens, setUser } = useAuthStore();
+  const { setSession } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,15 +42,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.login({ email, password });
-      // Update auth store with tokens and user
-      setTokens({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-      });
-      setUser(response.user);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message || 'Login failed. Please check your credentials.');
+        setLoading(false);
+        return;
+      }
+      setSession(data.session);
       enqueueSnackbar('Login successful!', { variant: 'success' });
-      // Use router.push for client-side navigation
       router.push('/dashboard');
     } catch (err) {
       const message =

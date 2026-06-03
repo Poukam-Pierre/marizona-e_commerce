@@ -322,10 +322,10 @@ export interface RecentOrder {
 
 // Health Check Types
 export interface HealthCheckResponse {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'ok' | 'healthy' | 'degraded' | 'unhealthy' | string;
   timestamp: string;
-  uptime?: number;
   version?: string;
+  uptime?: number;
   responseTime?: number;
   services?: {
     database: {

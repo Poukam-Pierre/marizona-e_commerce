@@ -192,9 +192,32 @@ export default function CategoriesPage() {
       .replace(/(^-|-$)/g, '');
   };
 
-  // Get root categories only for table display
-  const rootCategories = categories.filter((c) => !c.parentId);
-  const paginatedCategories = rootCategories.slice(
+  // Build tree-sorted list: root categories first, then children immediately
+  // after their parent (indented), matching standard e-commerce admin UX.
+  const buildTreeSortedList = (cats: Category[]): Array<Category & { depth: number }> => {
+    const byParent = new Map<string | null, Category[]>();
+    for (const c of cats) {
+      const key = c.parentId ?? null;
+      if (!byParent.has(key)) byParent.set(key, []);
+      byParent.get(key)!.push(c);
+    }
+    const sortFn = (a: Category, b: Category) =>
+      (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name);
+
+    const result: Array<Category & { depth: number }> = [];
+    const walk = (parentId: string | null, depth: number) => {
+      const children = byParent.get(parentId) ?? [];
+      for (const cat of children.sort(sortFn)) {
+        result.push({ ...cat, depth });
+        walk(cat.id, depth + 1);
+      }
+    };
+    walk(null, 0);
+    return result;
+  };
+
+  const allCategoriesSorted = buildTreeSortedList(categories);
+  const paginatedCategories = allCategoriesSorted.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
@@ -241,11 +264,29 @@ export default function CategoriesPage() {
                 </TableRow>
               ) : (
                 paginatedCategories.map((category) => (
-                  <TableRow key={category.id} hover>
+                  <TableRow
+                    key={category.id}
+                    hover
+                    sx={category.depth > 0 ? { bgcolor: 'action.hover' } : undefined}
+                  >
                     <TableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          pl: category.depth * 3,
+                        }}
                       >
+                        {category.depth > 0 && (
+                          <Typography
+                            variant="caption"
+                            color="text.disabled"
+                            sx={{ userSelect: 'none' }}
+                          >
+                            {'└'}
+                          </Typography>
+                        )}
                         <Box
                           sx={{
                             width: 40,
@@ -255,6 +296,7 @@ export default function CategoriesPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            flexShrink: 0,
                           }}
                         >
                           {category.image ? (
@@ -270,19 +312,22 @@ export default function CategoriesPage() {
                               }}
                             />
                           ) : (
-                            <FolderIcon color="action" />
+                            <FolderIcon
+                              color="action"
+                              fontSize={category.depth > 0 ? 'small' : 'medium'}
+                            />
                           )}
                         </Box>
                         <Box>
-                          <Typography variant="body2" fontWeight={500}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={category.depth === 0 ? 600 : 400}
+                          >
                             {category.name}
                           </Typography>
-                          {category.description && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {category.description.slice(0, 50)}...
+                          {category.parentId && (
+                            <Typography variant="caption" color="text.secondary">
+                              {categories.find((c) => c.id === category.parentId)?.name}
                             </Typography>
                           )}
                         </Box>
@@ -331,7 +376,7 @@ export default function CategoriesPage() {
 
         <TablePagination
           component="div"
-          count={rootCategories.length}
+          count={allCategoriesSorted.length}
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}

@@ -1,6 +1,7 @@
 import './global.css';
 import { AppProviders } from '../providers/app-providers';
 import { AuthGuard } from '../components/layout/auth-guard';
+import { RealtimeProvider } from '../providers/realtime-provider';
 
 export const metadata = {
   title: 'ShopPk Admin',
@@ -17,7 +18,9 @@ export default function RootLayout({
       <body>
         <AppProviders>
           <AuthGuard>
-            {children}
+            <RealtimeProvider>
+              {children}
+            </RealtimeProvider>
           </AuthGuard>
         </AppProviders>
       </body>

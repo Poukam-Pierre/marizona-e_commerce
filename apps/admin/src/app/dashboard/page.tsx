@@ -115,8 +115,10 @@ export default function DashboardPage() {
 
   // Get API status from health check
   const apiStatus = healthCheck?.status || 'unknown';
+  const apiVersion = healthCheck?.version || 'Unknown';
   const getStatusColor = () => {
     switch (apiStatus) {
+      case 'ok':
       case 'healthy':
         return 'success';
       case 'degraded':
@@ -130,6 +132,7 @@ export default function DashboardPage() {
   const getStatusLabel = () => {
     if (healthLoading) return 'Checking...';
     switch (apiStatus) {
+      case 'ok':
       case 'healthy':
         return 'Running';
       case 'degraded':
@@ -236,6 +239,14 @@ export default function DashboardPage() {
                   color={getStatusColor()}
                   size="small"
                 />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">
+                  API Version
+                </Typography>
+                <Typography variant="body2" fontWeight={500}>
+                  {apiVersion}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">
