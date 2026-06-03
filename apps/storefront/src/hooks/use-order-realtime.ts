@@ -67,7 +67,6 @@ export function useOrderRealtime(
     // onStatusChange is intentionally excluded — callers should use useCallback
     // or a ref if they need stable identity. Including it would cause
     // subscribe/unsubscribe on every render for inline functions.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   return { orderStatus, isConnected };
