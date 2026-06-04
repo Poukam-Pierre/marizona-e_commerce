@@ -1,5 +1,5 @@
 {
-  "packageManager": "bun@latest",
-  "buildCommand": "bun run build:admin",
-  "outputDirectory": ".next"
+  "buildCommand": "cd ../.. && bun run build:admin",
+  "outputDirectory": "../../dist/apps/admin/.next",
+  "installCommand": "bun install"
 }
