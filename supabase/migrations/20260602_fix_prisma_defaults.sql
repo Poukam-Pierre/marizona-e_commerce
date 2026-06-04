@@ -30,10 +30,13 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   v_timestamp text;
+  v_entropy   text;
   v_random    text;
 BEGIN
-  v_timestamp := to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint);
-  v_random    := lower(substring(md5(gen_random_bytes(10)::text) FROM 1 FOR 20));
+  -- No pgcrypto dependency (gen_random_bytes); works on plain PostgreSQL/Supabase.
+  v_timestamp := lpad(to_hex(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint), 11, '0');
+  v_entropy   := md5(random()::text || clock_timestamp()::text || txid_current()::text);
+  v_random    := lower(substring(v_entropy FROM 1 FOR 20));
   RETURN 'c' || substring(v_timestamp || v_random FROM 1 FOR 24);
 END;
 $$;
