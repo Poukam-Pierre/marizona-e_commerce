@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { FUNCTIONS_URL } from '@/services/api';
 
 interface UsePushNotificationsOptions {
   /** Auto-request permission on mount. Default: false */
@@ -113,12 +114,8 @@ export function usePushNotifications(
     setError(null);
 
     try {
-      // Get VAPID public key from backend
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
-      const vapidResponse = await fetch(
-        `${apiUrl}/notifications/push/vapid-key`,
-      );
+      // Get VAPID public key from Edge Function
+      const vapidResponse = await fetch(`${FUNCTIONS_URL}/push-vapid-key`);
 
       if (!vapidResponse.ok) {
         throw new Error('Failed to get VAPID key');
@@ -137,21 +134,17 @@ export function usePushNotifications(
 
       console.log('[Push] Subscribed:', pushSubscription);
 
-      // Send subscription to backend
-      const subscribeResponse = await fetch(
-        `${apiUrl}/notifications/push/subscribe`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            endpoint: pushSubscription.endpoint,
-            p256dh: arrayBufferToBase64(pushSubscription.getKey('p256dh')),
-            auth: arrayBufferToBase64(pushSubscription.getKey('auth')),
-          }),
-        },
-      );
+      // Send subscription to Edge Function
+      const subscribeResponse = await fetch(`${FUNCTIONS_URL}/push-subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: pushSubscription.endpoint,
+          p256dh: arrayBufferToBase64(pushSubscription.getKey('p256dh')),
+          auth: arrayBufferToBase64(pushSubscription.getKey('auth')),
+          userAgent: navigator.userAgent,
+        }),
+      });
 
       if (!subscribeResponse.ok) {
         throw new Error('Failed to save subscription');
@@ -189,17 +182,11 @@ export function usePushNotifications(
       // Unsubscribe from push
       await subscription.unsubscribe();
 
-      // Notify backend
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
-      await fetch(`${apiUrl}/notifications/push/unsubscribe`, {
+      // Notify Edge Function
+      await fetch(`${FUNCTIONS_URL}/push-unsubscribe`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          endpoint: subscription.endpoint,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
       });
 
       console.log('[Push] Unsubscribed');
