@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -19,7 +19,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useCart } from '@/providers/cart-provider';
 import { useCreateOrder } from '@/hooks/use-api';
-import { apiFetch, FUNCTIONS_URL } from '@/services/api';
+import { apiFetch, FUNCTIONS_URL, api } from '@/services/api';
 import { saveRecentOrder } from '@/app/orders/track/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,6 +74,47 @@ export default function CheckoutPage() {
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [trackingCopied, setTrackingCopied] = useState(false);
+  // Stock violations detected at checkout load time
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
+
+  // Pre-flight stock check: re-fetch current inventory for all cart items
+  // and flag anything that exceeds available stock before the user submits.
+  useEffect(() => {
+    if (items.length === 0) return;
+    let cancelled = false;
+
+    (async () => {
+      const errors: string[] = [];
+      await Promise.all(
+        items.map(async (item) => {
+          try {
+            const product = await api.getProduct(item.productId);
+            if (!product.inventoryTracked) return;
+
+            const available = item.variantId
+              ? (product.variants.find((v) => v.id === item.variantId)?.inventoryQuantity ?? 0)
+              : product.inventoryQuantity;
+
+            if (item.quantity > available) {
+              const label = item.variantName
+                ? `${item.productName} (${item.variantName})`
+                : item.productName;
+              errors.push(
+                available === 0
+                  ? `${label} is out of stock`
+                  : `${label}: only ${available} available (you have ${item.quantity})`,
+              );
+            }
+          } catch {
+            // Network failure — skip; server will catch it on submit
+          }
+        }),
+      );
+      if (!cancelled) setStockErrors(errors);
+    })();
+
+    return () => { cancelled = true; };
+  }, [items]);
 
   const formatPrice = (price: number) => {
     return `FCFA ${price.toLocaleString('id-ID')}`;
@@ -91,71 +132,86 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Block submit if pre-flight stock check found violations
+      if (stockErrors.length > 0) {
+        stockErrors.forEach((msg) => toast.error(msg));
+        return;
+      }
+
+      const orderData = {
+        customerName: values.customerName,
+        customerPhone: values.customerPhone,
+        customerEmail: values.customerEmail || undefined,
+        customerWhatsapp: values.customerWhatsapp || values.customerPhone,
+        shippingName: values.shippingName || values.customerName,
+        shippingPhone: values.shippingPhone || values.customerPhone,
+        shippingAddress: values.shippingAddress,
+        shippingCity: values.shippingCity,
+        shippingProvince: values.shippingProvince,
+        shippingPostalCode: values.shippingPostalCode,
+        shippingCost: shippingCost > 0 ? shippingCost : undefined,
+        items: items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
+        customerNotes: values.customerNotes || undefined,
+      };
+
+      let order: Awaited<ReturnType<typeof createOrder.mutateAsync>>;
       try {
-        const orderData = {
-          customerName: values.customerName,
-          customerPhone: values.customerPhone,
-          customerEmail: values.customerEmail || undefined,
-          customerWhatsapp: values.customerWhatsapp || values.customerPhone,
-          shippingName: values.shippingName || values.customerName,
-          shippingPhone: values.shippingPhone || values.customerPhone,
-          shippingAddress: values.shippingAddress,
-          shippingCity: values.shippingCity,
-          shippingProvince: values.shippingProvince,
-          shippingPostalCode: values.shippingPostalCode,
-          shippingCost: shippingCost > 0 ? shippingCost : undefined,
-          items: items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-          })),
-          customerNotes: values.customerNotes || undefined,
-        };
+        order = await createOrder.mutateAsync(orderData);
+      } catch (error) {
+        const msg =
+          error instanceof Error && error.message
+            ? error.message
+            : 'Failed to create order. Please try again.';
+        toast.error(msg);
+        console.error('Order creation failed:', error);
+        return;
+      }
 
-        const order = await createOrder.mutateAsync(orderData);
+      // Track purchased products locally so the product page can gate the rating UI
+      try {
+        const existing = JSON.parse(
+          localStorage.getItem('purchased-product-ids') ?? '[]',
+        ) as string[];
+        const newIds = items.map((item) => item.productId);
+        const merged = Array.from(new Set([...existing, ...newIds]));
+        localStorage.setItem('purchased-product-ids', JSON.stringify(merged));
+      } catch {
+        // non-critical – ignore storage errors
+      }
 
-        // Track purchased products locally so the product page can gate the rating UI
-        try {
-          const existing = JSON.parse(
-            localStorage.getItem('purchased-product-ids') ?? '[]',
-          ) as string[];
-          const newIds = items.map((item) => item.productId);
-          const merged = Array.from(new Set([...existing, ...newIds]));
-          localStorage.setItem('purchased-product-ids', JSON.stringify(merged));
-        } catch {
-          // non-critical – ignore storage errors
-        }
+      // Build tokenised tracking URL and persist to sessionStorage for this session
+      const tUrl = `${window.location.origin}/orders/${order.id}?token=${encodeURIComponent(order.lookupToken)}`;
+      try {
+        sessionStorage.setItem(`order-token-${order.id}`, order.lookupToken);
+      } catch {
+        // ignore storage errors
+      }
+      // Save to localStorage so the /orders/track page can list it later
+      saveRecentOrder({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        trackingUrl: tUrl,
+        createdAt: order.createdAt,
+      });
+      setTrackingUrl(tUrl);
+      setOrderNumber(order.orderNumber);
+      clearCart();
+      setOrderCreated(true);
+      toast.success('Order created successfully!');
 
-        // Build tokenised tracking URL and persist to sessionStorage for this session
-        const tUrl = `${window.location.origin}/orders/${order.id}?token=${encodeURIComponent(order.lookupToken)}`;
-        try {
-          sessionStorage.setItem(`order-token-${order.id}`, order.lookupToken);
-        } catch {
-          // ignore storage errors
-        }
-        // Save to localStorage so the /orders/track page can list it later
-        saveRecentOrder({
-          id: order.id,
-          orderNumber: order.orderNumber,
-          trackingUrl: tUrl,
-          createdAt: order.createdAt,
-        });
-        setTrackingUrl(tUrl);
-        setOrderNumber(order.orderNumber);
-
-        // Fetch WhatsApp URL from backend (includes properly formatted message)
+      // Fetch WhatsApp URL — non-blocking after order is confirmed
+      try {
         const { url: waUrl } = await apiFetch<{ url: string }>(
           `${FUNCTIONS_URL}/orders-whatsapp-link?id=${encodeURIComponent(order.id)}&token=${encodeURIComponent(order.lookupToken)}`,
         );
-
         setWhatsappUrl(waUrl);
-        setOrderCreated(true);
-        clearCart();
-
-        toast.success('Order created successfully!');
       } catch (error) {
-        toast.error('Failed to create order. Please try again.');
-        console.error('Order creation failed:', error);
+        console.warn('WhatsApp link generation failed:', error);
+        // Order was created successfully; WhatsApp link is non-critical
       }
     },
   });
@@ -639,11 +695,23 @@ export default function CheckoutPage() {
                   </div>
                 </CardContent>
                 <div className="p-6 pt-0">
+                  {stockErrors.length > 0 && (
+                    <div className="mb-4 rounded-md bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-3 space-y-1">
+                      {stockErrors.map((msg, i) => (
+                        <p key={i} className="text-sm text-red-700 dark:text-red-400">
+                          ⚠ {msg}
+                        </p>
+                      ))}
+                      <p className="text-xs text-red-500 dark:text-red-500 pt-1">
+                        Please update your cart before placing the order.
+                      </p>
+                    </div>
+                  )}
                   <Button
                     type="submit"
                     className="w-full gap-2"
                     size="lg"
-                    disabled={createOrder.isPending}
+                    disabled={createOrder.isPending || stockErrors.length > 0}
                   >
                     {createOrder.isPending ? (
                       <>

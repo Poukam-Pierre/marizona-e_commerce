@@ -220,4 +220,6 @@ export interface CartItem {
   variantId?: string;
   variantName?: string;
   ownerWhatsapp?: string | null;
+  inventoryTracked: boolean;
+  inventoryQuantity: number;
 }

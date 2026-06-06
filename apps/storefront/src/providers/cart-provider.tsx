@@ -192,6 +192,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         variantId,
         variantName,
         ownerWhatsapp: product.ownerWhatsapp,
+        inventoryTracked: product.inventoryTracked,
+        inventoryQuantity: variant?.inventoryQuantity ?? product.inventoryQuantity,
       },
     });
   };
