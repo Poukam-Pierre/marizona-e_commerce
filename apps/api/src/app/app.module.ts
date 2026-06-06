@@ -1,25 +1,29 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 // Common
 import { CommonModule } from '../common/common.module';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
-import { TransformInterceptor } from '../common/interceptors/transform.interceptor';
 import { LoggingMiddleware } from '../common/interceptors/logging.middleware';
+import { TransformInterceptor } from '../common/interceptors/transform.interceptor';
 
 // Modules
 import { AuthModule } from '../modules/auth/auth.module';
-import { UsersModule } from '../modules/users/users.module';
-import { ProductsModule } from '../modules/products/products.module';
 import { CategoriesModule } from '../modules/categories/categories.module';
-import { OrdersModule } from '../modules/orders/orders.module';
+import { DashboardModule } from '../modules/dashboard/dashboard.module';
 import { InventoryModule } from '../modules/inventory/inventory.module';
 import { NotificationsModule } from '../modules/notifications/notifications.module';
+import { OrdersModule } from '../modules/orders/orders.module';
+import { ProductsModule } from '../modules/products/products.module';
+import { UsersModule } from '../modules/users/users.module';
 
 // Config
-import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
+import { appConfig, databaseConfig, jwtConfig, redisConfig } from '../config';
+import { SettingsModule } from '../modules/settings/settings.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -60,8 +64,11 @@ import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
     OrdersModule,
     InventoryModule,
     NotificationsModule,
+    DashboardModule,
+    SettingsModule,
   ],
   providers: [
+    AppService,
     // Global exception filter
     {
       provide: APP_FILTER,
@@ -73,6 +80,7 @@ import { appConfig, jwtConfig, redisConfig, databaseConfig } from '../config';
       useClass: TransformInterceptor,
     },
   ],
+  controllers: [AppController],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

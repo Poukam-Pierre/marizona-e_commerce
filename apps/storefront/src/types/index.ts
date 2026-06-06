@@ -12,6 +12,8 @@ export interface Product {
   inventoryTracked: boolean;
   lowStockThreshold: number;
   downloadUrl: string | null;
+  downloadLimit: number | null;
+  downloadExpiry: string | null;
   ownerName: string | null;
   ownerWhatsapp: string | null;
   categoryId: string | null;
@@ -46,6 +48,10 @@ export interface Product {
     option1Value: string | null;
     option2Name: string | null;
     option2Value: string | null;
+    option3Name: string | null;
+    option3Value: string | null;
+    weight: number | null;
+    image: string | null;
     isActive: boolean;
   }>;
 }
@@ -64,17 +70,10 @@ export interface Category {
 export interface Order {
   id: string;
   orderNumber: string;
-  customerName: string;
-  customerEmail: string | null;
-  customerPhone: string;
-  customerWhatsapp: string | null;
-  shippingName: string;
-  shippingPhone: string;
-  shippingAddress: string;
+  /** Phone masked to last 4 digits */
+  maskedPhone: string;
   shippingCity: string;
   shippingProvince: string;
-  shippingPostalCode: string;
-  shippingCountry: string;
   subtotal: number;
   discount: number;
   shippingCost: number;
@@ -85,6 +84,12 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   createdAt: string;
+  confirmedAt: string | null;
+  paidAt: string | null;
+  completedAt: string | null;
+  deliveredAt: string | null;
+  /** Expiry of the lookup token — shown on tracking page */
+  lookupTokenExpiry: string | null;
   items: OrderItem[];
 }
 
@@ -100,6 +105,17 @@ export interface OrderItem {
   totalPrice: number;
   quantity: number;
   productType: 'PHYSICAL' | 'DIGITAL';
+  /** Computed by API based on payment + status + expiry + limit */
+  downloadEligible: boolean;
+  downloadBlockedReason:
+    | 'NOT_PAID'
+    | 'ORDER_CANCELLED'
+    | 'LINK_EXPIRED'
+    | 'LIMIT_REACHED'
+    | null;
+  downloadCount: number;
+  downloadLimit: number | null;
+  downloadExpiry: string | null;
 }
 
 export type OrderStatus =
@@ -162,6 +178,14 @@ export interface ProductQuery {
   sortOrder?: 'asc' | 'desc';
 }
 
+/** Returned ONCE at order creation — raw token, never persisted by server */
+export interface OrderCreatedResponse extends Omit<Order, 'maskedPhone' | 'confirmedAt' | 'paidAt' | 'completedAt' | 'deliveredAt' | 'lookupTokenExpiry'> {
+  customerName: string;
+  customerPhone: string;
+  lookupToken: string;
+  lookupTokenExpiry: string;
+}
+
 // Create Order DTO
 export interface CreateOrderDto {
   customerName: string;
@@ -173,7 +197,7 @@ export interface CreateOrderDto {
   shippingAddress: string;
   shippingCity: string;
   shippingProvince: string;
-  shippingPostalCode: string;
+  shippingPostalCode?: string;
   shippingCountry?: string;
   items: Array<{
     productId: string;
@@ -181,6 +205,7 @@ export interface CreateOrderDto {
     quantity: number;
   }>;
   customerNotes?: string;
+  shippingCost?: number;
 }
 
 // Cart Types
@@ -195,4 +220,6 @@ export interface CartItem {
   variantId?: string;
   variantName?: string;
   ownerWhatsapp?: string | null;
+  inventoryTracked: boolean;
+  inventoryQuantity: number;
 }

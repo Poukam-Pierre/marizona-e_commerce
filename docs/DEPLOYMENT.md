@@ -1,4 +1,4 @@
-# ShopNx Production Deployment Guide
+# ShopPk Production Deployment Guide
 
 ## Table of Contents
 
@@ -118,9 +118,9 @@ Images are published to GitHub Container Registry:
 
 ```bash
 # Pull images
-docker pull ghcr.io/shopnx/shopnx/api:latest
-docker pull ghcr.io/shopnx/shopnx/storefront:latest
-docker pull ghcr.io/shopnx/shopnx/admin:latest
+docker pull ghcr.io/shoppk/shoppk/api:latest
+docker pull ghcr.io/shoppk/shoppk/storefront:latest
+docker pull ghcr.io/shoppk/shoppk/admin:latest
 ```
 
 ---
@@ -149,24 +149,24 @@ helm install nginx-ingress nginx-ingress/ingress-nginx \
   --namespace ingress-nginx --create-namespace
 
 # Deploy application
-helm upgrade --install shopnx ./helm \
+helm upgrade --install shoppk ./helm \
   -f helm/values-production.yaml \
-  --namespace shopnx-production --create-namespace
+  --namespace shoppk-production --create-namespace
 ```
 
 ### Required Kubernetes Resources
 
 ```bash
 # Create namespace
-kubectl create namespace shopnx-production
+kubectl create namespace shoppk-production
 
 # Create secrets (use external-secrets-operator in production)
-kubectl create secret generic shopnx-secrets \
+kubectl create secret generic shoppk-secrets \
   --from-literal=database-url='postgresql://...' \
   --from-literal=redis-url='redis://...' \
   --from-literal=jwt-secret='...' \
   --from-literal=jwt-refresh-secret='...' \
-  -n shopnx-production
+  -n shoppk-production
 ```
 
 ---
@@ -200,11 +200,11 @@ JWT_REFRESH_EXPIRATION=7d
 # Web Push (VAPID)
 VAPID_PUBLIC_KEY=<public-key>
 VAPID_PRIVATE_KEY=<private-key>
-VAPID_SUBJECT=mailto:admin@shopnx.com
+VAPID_SUBJECT=mailto:admin@shoppk.com
 
 # Frontend URLs
-NEXT_PUBLIC_API_URL=https://api.shopnx.com/api/v1
-NEXT_PUBLIC_APP_URL=https://shopnx.com
+NEXT_PUBLIC_API_URL=https://api.shoppk.com/api/v1
+NEXT_PUBLIC_APP_URL=https://shoppk.com
 ```
 
 ### Generate Secure Secrets
@@ -378,7 +378,7 @@ Response: 200 OK
 kubectl exec -it deployment/api -- nc -zv postgres 5432
 
 # Check connection string
-kubectl get secret shopnx-secrets -o jsonpath='{.data.database-url}' | base64 -d
+kubectl get secret shoppk-secrets -o jsonpath='{.data.database-url}' | base64 -d
 ```
 
 #### High Memory Usage
@@ -395,27 +395,27 @@ kubectl exec -it deployment/api -- curl localhost:3002/debug/pprof/heap
 
 ```bash
 # Check service worker registration
-curl -I https://shopnx.com/sw.js
+curl -I https://shoppk.com/sw.js
 # Should return: Service-Worker-Allowed: /
 
 # Check manifest
-curl https://shopnx.com/manifest.json | jq
+curl https://shoppk.com/manifest.json | jq
 ```
 
 ### Useful Commands
 
 ```bash
 # View logs
-kubectl logs -f deployment/api -n shopnx-production
+kubectl logs -f deployment/api -n shoppk-production
 
 # Check pod status
-kubectl get pods -n shopnx-production
+kubectl get pods -n shoppk-production
 
 # Execute into container
 kubectl exec -it deployment/api -- /bin/sh
 
 # Port forward for debugging
-kubectl port-forward svc/api 3002:3002 -n shopnx-production
+kubectl port-forward svc/api 3002:3002 -n shoppk-production
 ```
 
 ---

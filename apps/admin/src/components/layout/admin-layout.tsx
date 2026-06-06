@@ -26,6 +26,7 @@ import {
 import { Sidebar } from './sidebar';
 import { useThemeToggle } from '@/providers/app-providers';
 import { useAuthStore } from '@/stores/auth-store';
+import { useRouter } from 'next/navigation';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -34,11 +35,14 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { darkMode, toggleTheme } = useThemeToggle();
   const { user, logout } = useAuthStore();
+  const { push } = useRouter();
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setUserMenuAnchor(event.currentTarget);
@@ -48,14 +52,23 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     setUserMenuAnchor(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleUserMenuClose();
-    logout();
-    window.location.href = '/login';
+    try {
+      await logout();
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+      }}
+    >
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -135,7 +148,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                   fontSize: '0.875rem',
                 }}
               >
-                {user?.name?.charAt(0).toUpperCase() || 'A'}
+                {(user?.user_metadata?.name ?? user?.email)
+                  ?.charAt(0)
+                  .toUpperCase() || 'A'}
               </Avatar>
             </IconButton>
 
@@ -148,14 +163,14 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
             >
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography variant="subtitle2" fontWeight={600}>
-                  {user?.name}
+                  {user?.user_metadata?.name ?? user?.email}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {user?.email}
                 </Typography>
               </Box>
               <MenuItem onClick={handleUserMenuClose}>Profile</MenuItem>
-              <MenuItem onClick={handleUserMenuClose}>Settings</MenuItem>
+              <MenuItem onClick={() => push('/settings')}>Settings</MenuItem>
               <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                 Logout
               </MenuItem>

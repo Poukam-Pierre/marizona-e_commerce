@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Box, CircularProgress } from '@mui/material';
 import { useAuthStore } from '@/stores/auth-store';
+import { supabase } from '@/lib/supabase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -12,19 +13,23 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, hydrated } = useAuthStore();
+  const { isAuthenticated, setSession, setHydrated, hydrated } = useAuthStore();
   const [initialized, setInitialized] = useState(false);
 
-  // Wait for hydration
+  // Bootstrap: load existing session, then subscribe to auth state changes
   useEffect(() => {
-    if (hydrated) {
-      // Small delay to ensure state is fully synced
-      const timer = setTimeout(() => {
-        setInitialized(true);
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [hydrated]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setHydrated(true);
+      setInitialized(true);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setSession, setHydrated]);
 
   // Handle redirects after initialization
   useEffect(() => {
@@ -34,19 +39,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const isRootPage = pathname === '/';
 
     if (isAuthenticated) {
-      // Redirect away from login/root if authenticated
       if (isLoginPage || isRootPage) {
         router.replace('/dashboard');
       }
     } else {
-      // Redirect to login if not authenticated and not on login page
       if (!isLoginPage) {
         router.replace('/login');
       }
     }
   }, [initialized, isAuthenticated, pathname, router]);
 
-  // Show loading during hydration
+  // Show loading until session is resolved
   if (!hydrated || !initialized) {
     return (
       <Box

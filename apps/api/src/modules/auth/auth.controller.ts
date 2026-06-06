@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,8 +15,10 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
-import { CurrentUser, AdminJwtPayload } from '../../common/decorators/current-user.decorator';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  AdminJwtPayload,
+} from '../../common/decorators/current-user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')

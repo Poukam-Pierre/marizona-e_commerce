@@ -1,17 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import type {
+  BulkUpdateSettingsDto,
   CreateCategoryDto,
-  UpdateCategoryDto,
   CreateProductDto,
-  UpdateProductDto,
-  CreateOrderDto,
-  UpdateOrderDto,
+  CreateSettingDto,
   QueryParams,
+  UpdateCategoryDto,
+  UpdateOrderDto,
+  UpdateProductDto,
 } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Query Keys
 export const queryKeys = {
+  health: ['health'] as const,
   dashboard: {
     stats: ['dashboard', 'stats'] as const,
     lowStock: ['dashboard', 'lowStock'] as const,
@@ -21,9 +23,24 @@ export const queryKeys = {
   category: (id: string) => ['categories', id] as const,
   products: (params?: QueryParams) => ['products', params] as const,
   product: (id: string) => ['products', id] as const,
-  orders: (params?: QueryParams & { status?: string }) => ['orders', params] as const,
+  orders: (params?: QueryParams & { status?: string }) =>
+    ['orders', params] as const,
   order: (id: string) => ['orders', id] as const,
+  settings: ['settings'] as const,
+  setting: (key: string) => ['settings', key] as const,
+  settingsByCategory: (category: string) =>
+    ['settings', 'category', category] as const,
 };
+
+// Health Check Hook
+export function useHealthCheck() {
+  return useQuery({
+    queryKey: queryKeys.health,
+    queryFn: () => api.checkHealth(),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 1,
+  });
+}
 
 // Dashboard Hooks
 export function useDashboardStats() {
@@ -65,7 +82,7 @@ export function useCategory(id: string) {
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: CreateCategoryDto) => api.createCategory(data),
     onSuccess: () => {
@@ -76,9 +93,9 @@ export function useCreateCategory() {
 
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDto }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDto }) =>
       api.updateCategory(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories });
@@ -89,7 +106,7 @@ export function useUpdateCategory() {
 
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => api.deleteCategory(id),
     onSuccess: () => {
@@ -116,7 +133,7 @@ export function useProduct(id: string) {
 
 export function useCreateProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: CreateProductDto) => api.createProduct(data),
     onSuccess: () => {
@@ -128,9 +145,9 @@ export function useCreateProduct() {
 
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
       api.updateProduct(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products() });
@@ -142,7 +159,7 @@ export function useUpdateProduct() {
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => api.deleteProduct(id),
     onSuccess: () => {
@@ -154,10 +171,15 @@ export function useDeleteProduct() {
 
 export function useUploadProductImages() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ productId, images }: { productId: string; images: File[] }) => 
-      api.uploadProductImages(productId, images),
+    mutationFn: ({
+      productId,
+      images,
+    }: {
+      productId: string;
+      images: File[];
+    }) => api.uploadProductImages(productId, images),
     onSuccess: (_, { productId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.product(productId) });
     },
@@ -182,15 +204,17 @@ export function useOrder(id: string) {
 
 export function useUpdateOrder() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateOrderDto }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateOrderDto }) =>
       api.updateOrder(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.order(id) });
+    onSuccess: () => {
+      // Use the base key ['orders'] so ALL order queries (any params) are invalidated
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.recentOrders });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.recentOrders,
+      });
     },
   });
 }
@@ -198,7 +222,77 @@ export function useUpdateOrder() {
 // Notification Hook
 export function useSendPushNotification() {
   return useMutation({
-    mutationFn: ({ title, body }: { title: string; body: string }) => 
+    mutationFn: ({ title, body }: { title: string; body: string }) =>
       api.sendPushNotification(title, body),
+  });
+}
+
+// Settings Hooks
+export function useSettingsByCategory(category: string) {
+  return useQuery({
+    queryKey: queryKeys.settingsByCategory(category),
+    queryFn: () => api.getSettingsByCategory(category),
+    enabled: !!category,
+  });
+}
+
+export function useSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings,
+    queryFn: () => api.getSettings(),
+  });
+}
+
+export function useSetting(key: string) {
+  return useQuery({
+    queryKey: queryKeys.setting(key),
+    queryFn: () => api.getSetting(key),
+    enabled: !!key,
+  });
+}
+
+export function useUpsertSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateSettingDto) => api.upsertSetting(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+  });
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: BulkUpdateSettingsDto) => api.bulkUpdateSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+  });
+}
+
+export function useUpdateSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ key, value }: { key: string; value: any }) =>
+      api.updateSetting(key, value),
+    onSuccess: (_, { key }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+      queryClient.invalidateQueries({ queryKey: queryKeys.setting(key) });
+    },
+  });
+}
+
+export function useDeleteSetting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (key: string) => api.deleteSetting(key),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
   });
 }

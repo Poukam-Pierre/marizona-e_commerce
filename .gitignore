@@ -14,16 +14,21 @@ node_modules
 /coverage
 
 # next.js
-/.next/
+.next/
+*/.next/
 /out/
 
 # production
 /build
+dist/
 
 # misc
 .DS_Store
 *.pem
-
+/.sass-cache
+/connect.lock
+/libpeerconnection.log
+testem.log
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -32,6 +37,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.project
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # vercel
 .vercel
@@ -49,3 +59,47 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# System files
+.nx
+.nx/cache/*
+
+# IDE - VsCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# compiled output
+dist
+tmp
+/out-tsc
+
+#keys
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+mcp.json
+settings.json
+/ai_docs
+api.http
+api.json
+package.local.json
+package-lock.local.json
+tsconfig.tsbuildinfo
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Docker
+.dockerignore.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache

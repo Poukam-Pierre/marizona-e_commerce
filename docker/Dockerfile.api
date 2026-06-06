@@ -1,5 +1,5 @@
 # ============================================================================
-# ShopNx API - Production Dockerfile
+# ShopPk API - Production Dockerfile
 # Multi-stage build for NestJS application with Bun
 # ============================================================================
 

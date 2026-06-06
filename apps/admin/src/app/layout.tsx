@@ -1,9 +1,10 @@
 import './global.css';
 import { AppProviders } from '../providers/app-providers';
 import { AuthGuard } from '../components/layout/auth-guard';
+import { RealtimeProvider } from '../providers/realtime-provider';
 
 export const metadata = {
-  title: 'ShopNx Admin',
+  title: 'ShopPk Admin',
   description: 'E-commerce Admin Dashboard',
 };
 
@@ -17,7 +18,9 @@ export default function RootLayout({
       <body>
         <AppProviders>
           <AuthGuard>
-            {children}
+            <RealtimeProvider>
+              {children}
+            </RealtimeProvider>
           </AuthGuard>
         </AppProviders>
       </body>

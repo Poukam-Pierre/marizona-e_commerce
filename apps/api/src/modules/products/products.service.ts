@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { RedisService } from '../../common/services/redis.service';
+import { PushNotificationService } from '../notifications/push-notification.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto } from './dto/query-product.dto';
@@ -21,6 +22,7 @@ export class ProductsService {
   constructor(
     private prisma: PrismaService,
     private redisService: RedisService,
+    private pushNotificationService: PushNotificationService,
   ) {}
 
   async findAll(query: QueryProductDto): Promise<PaginatedResult<any>> {
@@ -143,6 +145,23 @@ export class ProductsService {
         },
         variants: {
           where: { isActive: true },
+          select: {
+            id: true,
+            sku: true,
+            name: true,
+            price: true,
+            comparePrice: true,
+            inventoryQuantity: true,
+            isActive: true,
+            weight: true,
+            option1Name: true,
+            option1Value: true,
+            option2Name: true,
+            option2Value: true,
+            option3Name: true,
+            option3Value: true,
+            image: true,
+          },
         },
       },
     });
@@ -177,59 +196,145 @@ export class ProductsService {
     return product;
   }
 
-  async create(dto: CreateProductDto) {
+  async rate(id: string, score: number) {
+    const product = await this.prisma.product.findUnique({
+      where: { id, deletedAt: null },
+      select: { id: true, rating: true, reviewCount: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    const currentCount = product.reviewCount;
+    const currentRating = product.rating ?? 0;
+    const newCount = currentCount + 1;
+    const newRating = (currentRating * currentCount + score) / newCount;
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: {
+        rating: Math.round(newRating * 10) / 10, // 1 decimal place
+        reviewCount: newCount,
+      },
+      select: { rating: true, reviewCount: true },
+    });
+
+    // Invalidate product cache
+    await this.redisService.del(`${CACHE_KEY_PREFIX}:${id}`);
+    await this.redisService.delPattern(`${CACHE_KEY_PREFIX}:list:*`);
+
+    return updated;
+  }
+
+  async create(payload: CreateProductDto) {
+    const {
+      sku,
+      categoryId,
+      description,
+      images,
+      inventoryQuantity,
+      name,
+      ownerWhatsapp,
+      price,
+      slug,
+      type,
+      comparePrice,
+      costPrice,
+      downloadExpiry,
+      downloadLimit,
+      downloadUrl,
+      height,
+      inventoryTracked,
+      isActive,
+      isBestSeller,
+      isFeatured,
+      length,
+      lowStockThreshold,
+      metaDescription,
+      metaTitle,
+      ownerName,
+      variants,
+      weight,
+      width,
+    } = payload;
+
     // Check if SKU exists
     const existingSku = await this.prisma.product.findUnique({
-      where: { sku: dto.sku },
+      where: { sku },
     });
 
     if (existingSku && !existingSku.deletedAt) {
-      throw new ConflictException(`Product with SKU ${dto.sku} already exists`);
+      throw new ConflictException(`Product with SKU ${sku} already exists`);
     }
 
     // Check if slug exists
     const existingSlug = await this.prisma.product.findUnique({
-      where: { slug: dto.slug },
+      where: { slug },
     });
 
     if (existingSlug && !existingSlug.deletedAt) {
-      throw new ConflictException(`Product with slug ${dto.slug} already exists`);
+      throw new ConflictException(`Product with slug ${slug} already exists`);
     }
+
+    const urlPrimaryImage = images.find((img) => img.isPrimary)?.url;
 
     // Create product
     const product = await this.prisma.product.create({
       data: {
-        sku: dto.sku,
-        name: dto.name,
-        slug: dto.slug,
-        description: dto.description,
-        type: dto.type || 'PHYSICAL',
-        price: dto.price,
-        comparePrice: dto.comparePrice,
-        costPrice: dto.costPrice,
-        inventoryQuantity: dto.inventoryQuantity || 0,
-        inventoryTracked: dto.inventoryTracked ?? true,
-        lowStockThreshold: dto.lowStockThreshold || 10,
-        weight: dto.weight,
-        length: dto.length,
-        width: dto.width,
-        height: dto.height,
-        downloadUrl: dto.downloadUrl,
-        downloadLimit: dto.downloadLimit,
-        downloadExpiry: dto.downloadExpiry,
-        ownerName: dto.ownerName,
-        ownerWhatsapp: dto.ownerWhatsapp,
-        categoryId: dto.categoryId,
-        image: dto.image,
-        isActive: dto.isActive ?? true,
-        isFeatured: dto.isFeatured ?? false,
-        metaTitle: dto.metaTitle,
-        metaDescription: dto.metaDescription,
+        sku,
+        name,
+        slug,
+        description,
+        type,
+        price,
+        comparePrice,
+        costPrice,
+        inventoryQuantity,
+        inventoryTracked,
+        lowStockThreshold,
+        weight,
+        length,
+        width,
+        height,
+        downloadUrl,
+        downloadLimit,
+        downloadExpiry,
+        ownerName,
+        ownerWhatsapp,
+        categoryId,
+        image: urlPrimaryImage,
+        isActive,
+        isFeatured,
+        isBestSeller,
+        metaTitle,
+        metaDescription,
+        // Create images if provided
+        images: images.length
+          ? {
+              create: images.map((img, index) => ({
+                url: img.url,
+                alt: img.alt || name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? index === 0,
+              })),
+            }
+          : undefined,
+        // Create variants if provided
+        variants: variants?.length
+          ? {
+              create: variants.map((variant) => ({
+                ...variant,
+              })),
+            }
+          : undefined,
       },
       include: {
         category: {
           select: { id: true, name: true, slug: true },
         },
+        images: true,
+        variants: true,
       },
     });
 
@@ -237,6 +342,18 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product created: ${product.sku}`);
+
+    // Send push notification to all subscribed users (background/PWA)
+    try {
+      await this.pushNotificationService.notifyProductCreated(product);
+    } catch (error) {
+      // Log error but don't fail the product creation
+      this.logger.error(
+        `Failed to send push notification for product ${product.sku}:`,
+        error,
+      );
+    }
+
     return product;
   }
 
@@ -257,7 +374,9 @@ export class ProductsService {
       });
 
       if (existingSku && !existingSku.deletedAt) {
-        throw new ConflictException(`Product with SKU ${dto.sku} already exists`);
+        throw new ConflictException(
+          `Product with SKU ${dto.sku} already exists`,
+        );
       }
     }
 
@@ -268,28 +387,137 @@ export class ProductsService {
       });
 
       if (existingSlug && !existingSlug.deletedAt) {
-        throw new ConflictException(`Product with slug ${dto.slug} already exists`);
+        throw new ConflictException(
+          `Product with slug ${dto.slug} already exists`,
+        );
       }
     }
+    // Destructure to separate relation fields from scalar fields
+    const { categoryId, images, variants, ...rest } = dto;
 
-    // Update product
-    const product = await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...dto,
-        updatedAt: new Date(),
-      },
-      include: {
-        category: {
-          select: { id: true, name: true, slug: true },
+    const product = await this.prisma.$transaction(async (tx) => {
+      // 1. Update scalar product fields
+      await tx.product.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(categoryId ? { category: { connect: { id: categoryId } } } : {}),
+          updatedAt: new Date(),
         },
-      },
+      });
+
+      // 2. Sync images — non-destructive:
+      //    - Update images whose id is included in the payload
+      //    - Create images with no id
+      //    - Hard-delete images NOT in the new list (safe: no entity holds a FK to product_images.id)
+      if (images !== undefined) {
+        const incomingIds = images
+          .filter((img) => img.id)
+          .map((img) => img.id as string);
+
+        await tx.productImage.deleteMany({
+          where: {
+            productId: id,
+            ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {}),
+          },
+        });
+
+        for (const [index, img] of images.entries()) {
+          if (img.id) {
+            await tx.productImage.update({
+              where: { id: img.id },
+              data: {
+                url: img.url,
+                alt: img.alt || existingProduct.name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? false,
+              },
+            });
+          } else {
+            await tx.productImage.create({
+              data: {
+                productId: id,
+                url: img.url,
+                alt: img.alt || existingProduct.name,
+                order: img.order ?? index,
+                isPrimary: img.isPrimary ?? false,
+              },
+            });
+          }
+        }
+
+        // Keep the product.image (primary image URL) in sync
+        const primaryImage = images.find((img) => img.isPrimary);
+        await tx.product.update({
+          where: { id },
+          data: { image: primaryImage?.url ?? existingProduct.image },
+        });
+      }
+
+      // 3. Sync variants — soft-delete-aware:
+      //    - Update variants whose id is included in the payload
+      //    - Create variants with no id
+      //    - Soft-delete variants NOT in the new list (isActive: false) instead of
+      //      hard-deleting them, because CartItem.variantId, OrderItem.variantId and
+      //      InventoryMovement.variantId hold references to variant IDs. Hard-deleting
+      //      would corrupt active carts and historical order/inventory records.
+      if (variants !== undefined) {
+        const incomingIds = variants
+          .filter((v) => v.id)
+          .map((v) => v.id as string);
+
+        await tx.productVariant.updateMany({
+          where: {
+            productId: id,
+            ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {}),
+          },
+          data: { isActive: false },
+        });
+
+        for (const { id: variantId, ...variantData } of variants) {
+          if (variantId) {
+            await tx.productVariant.update({
+              where: { id: variantId },
+              data: variantData,
+            });
+          } else {
+            await tx.productVariant.create({
+              data: { productId: id, ...variantData },
+            });
+          }
+        }
+      }
+
+      return tx.product.findUniqueOrThrow({
+        where: { id },
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+          images: { orderBy: { order: 'asc' } },
+          variants: { where: { isActive: true } },
+        },
+      });
     });
 
     // Clear cache
     await this.clearCache();
 
     this.logger.log(`Product updated: ${product.sku}`);
+
+    // // Emit real-time notification for product update
+    // this.notificationsGateway.emitProductUpdated({
+    //   type: 'product.updated',
+    //   product: {
+    //     id: product.id,
+    //     name: product.name,
+    //     slug: product.slug,
+    //     price: product.price,
+    //     image: product.image,
+    //     categoryId: product.categoryId,
+    //     categoryName: product.category?.name,
+    //   },
+    //   timestamp: new Date(),
+    // });
+
     return product;
   }
 
@@ -313,6 +541,21 @@ export class ProductsService {
     await this.clearCache();
 
     this.logger.log(`Product deleted: ${existingProduct.sku}`);
+
+    // // Emit real-time notification for product deletion
+    // this.notificationsGateway.emitProductDeleted({
+    //   type: 'product.deleted',
+    //   product: {
+    //     id: existingProduct.id,
+    //     name: existingProduct.name,
+    //     slug: existingProduct.slug,
+    //     price: existingProduct.price,
+    //     image: existingProduct.image,
+    //     categoryId: existingProduct.categoryId,
+    //   },
+    //   timestamp: new Date(),
+    // });
+
     return { message: 'Product deleted successfully' };
   }
 

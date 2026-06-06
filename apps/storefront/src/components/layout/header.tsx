@@ -1,11 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ShoppingCart, Search, Menu, X, Sun, Moon, Home, Package, User } from 'lucide-react';
-import { useState } from 'react';
-import { useTheme } from 'next-themes';
-import { useCart } from '@/providers/cart-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,19 +10,87 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/providers/cart-provider';
+import {
+  Home,
+  MapPin,
+  Menu,
+  Moon,
+  Package,
+  Search,
+  ShoppingCart,
+  Sun,
+  X,
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Products', href: '/products', icon: Package },
+  { name: 'Track Order', href: '/orders/track', icon: MapPin },
 ];
 
+// Separate component that uses usePathname - only rendered after mount
+function NavigationLinks({ activePath }: { activePath: string }) {
+  return (
+    <>
+      {navigation.map((item) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+            activePath === item.href ? 'text-primary' : 'text-muted-foreground'
+          }`}
+        >
+          <item.icon className="h-4 w-4" />
+          {item.name}
+        </Link>
+      ))}
+    </>
+  );
+}
+
+function MobileNavigationLinks({
+  activePath,
+  onClose,
+}: {
+  activePath: string;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {navigation.map((item) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          onClick={onClose}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            activePath === item.href
+              ? 'bg-primary/10 text-primary'
+              : 'hover:bg-muted'
+          }`}
+        >
+          <item.icon className="h-5 w-5" />
+          <span className="font-medium">{item.name}</span>
+        </Link>
+      ))}
+    </>
+  );
+}
+
 export function Header() {
-  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { totalItems, totalPrice } = useCart();
+  const { totalItems, isMounted } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,26 +102,17 @@ export function Header() {
               <Package className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              ShopNx
+              ShopPk
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === item.href
-                    ? 'text-primary'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            ))}
+            {mounted ? (
+              <PathnameAwareNavigationLinks />
+            ) : (
+              <NavigationLinks activePath="" />
+            )}
           </nav>
 
           {/* Actions */}
@@ -78,21 +132,28 @@ export function Header() {
             </Button>
 
             {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            {mounted ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" disabled>
+                <Sun className="h-5 w-5" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            )}
 
             {/* Cart */}
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
+                {isMounted && totalItems > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
@@ -115,21 +176,16 @@ export function Header() {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-4 mt-6">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        pathname === item.href
-                          ? 'bg-primary/10 text-primary'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
-                  ))}
+                  {mounted ? (
+                    <PathnameAwareMobileNavigationLinks
+                      onClose={() => setMobileMenuOpen(false)}
+                    />
+                  ) : (
+                    <MobileNavigationLinks
+                      activePath=""
+                      onClose={() => setMobileMenuOpen(false)}
+                    />
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
@@ -164,4 +220,19 @@ export function Header() {
       </div>
     </header>
   );
+}
+
+// These components use usePathname but are only rendered after mount
+function PathnameAwareNavigationLinks() {
+  const pathname = usePathname();
+  return <NavigationLinks activePath={pathname} />;
+}
+
+function PathnameAwareMobileNavigationLinks({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
+  const pathname = usePathname();
+  return <MobileNavigationLinks activePath={pathname} onClose={onClose} />;
 }

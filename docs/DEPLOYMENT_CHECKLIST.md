@@ -1,4 +1,4 @@
-# ShopNx Deployment Checklist
+# ShopPk Deployment Checklist
 
 ## Pre-Deployment Checklist
 
@@ -61,8 +61,8 @@
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-org/shopnx.git
-cd shopnx
+git clone https://github.com/your-org/shoppk.git
+cd shoppk
 
 # 2. Create environment file
 cp .env.example .env
@@ -91,26 +91,26 @@ curl http://localhost:3002/api/v1/health
 kubectl config use-context production-cluster
 
 # 2. Create namespace
-kubectl create namespace shopnx-production
+kubectl create namespace shoppk-production
 
 # 3. Create secrets
-kubectl create secret generic shopnx-secrets \
+kubectl create secret generic shoppk-secrets \
   --from-literal=database-url='postgresql://...' \
   --from-literal=redis-url='redis://...' \
   --from-literal=jwt-secret='...' \
   --from-literal=jwt-refresh-secret='...' \
-  -n shopnx-production
+  -n shoppk-production
 
 # 4. Deploy with Kustomize
 kubectl apply -k k8s/overlays/production
 
 # 5. Verify deployment
-kubectl get pods -n shopnx-production
-kubectl get services -n shopnx-production
-kubectl get ingress -n shopnx-production
+kubectl get pods -n shoppk-production
+kubectl get services -n shoppk-production
+kubectl get ingress -n shoppk-production
 
 # 6. Check logs
-kubectl logs -f deployment/api -n shopnx-production
+kubectl logs -f deployment/api -n shoppk-production
 ```
 
 ### Option C: CI/CD Pipeline (Recommended)
@@ -131,15 +131,15 @@ kubectl logs -f deployment/api -n shopnx-production
 
 ```bash
 # API Health
-curl https://api.shopnx.com/api/v1/health
+curl https://api.shoppk.com/api/v1/health
 # Expected: {"status":"ok","timestamp":"..."}
 
 # Storefront
-curl -I https://shopnx.com/
+curl -I https://shoppk.com/
 # Expected: HTTP/2 200
 
 # Admin
-curl -I https://admin.shopnx.com/
+curl -I https://admin.shoppk.com/
 # Expected: HTTP/2 200
 ```
 
@@ -156,10 +156,10 @@ curl -I https://admin.shopnx.com/
 
 ```bash
 # Response time (should be < 500ms)
-curl -w "@curl-format.txt" -o /dev/null -s https://shopnx.com/
+curl -w "@curl-format.txt" -o /dev/null -s https://shoppk.com/
 
 # Lighthouse score (should be > 90)
-npx lighthouse https://shopnx.com/ --output html --output-path lighthouse.html
+npx lighthouse https://shoppk.com/ --output html --output-path lighthouse.html
 ```
 
 ---
@@ -170,7 +170,7 @@ npx lighthouse https://shopnx.com/ --output html --output-path lighthouse.html
 
 ```bash
 # 1. Pull previous image version
-docker pull ghcr.io/shopnx/shopnx/api:PREVIOUS_SHA
+docker pull ghcr.io/shoppk/shoppk/api:PREVIOUS_SHA
 
 # 2. Update docker-compose with previous version
 # Edit image tag in docker-compose.prod.yml
@@ -184,16 +184,16 @@ bun run docker:up
 
 ```bash
 # 1. List deployment history
-kubectl rollout history deployment/api -n shopnx-production
+kubectl rollout history deployment/api -n shoppk-production
 
 # 2. Rollback to previous version
-kubectl rollout undo deployment/api -n shopnx-production
+kubectl rollout undo deployment/api -n shoppk-production
 
 # 3. Or rollback to specific revision
-kubectl rollout undo deployment/api --to-revision=2 -n shopnx-production
+kubectl rollout undo deployment/api --to-revision=2 -n shoppk-production
 
 # 4. Verify rollback
-kubectl rollout status deployment/api -n shopnx-production
+kubectl rollout status deployment/api -n shoppk-production
 ```
 
 ---
@@ -210,7 +210,7 @@ kubectl rollout status deployment/api -n shopnx-production
 kubectl exec -it deployment/api -- nc -zv postgres 5432
 
 # Verify connection string
-kubectl get secret shopnx-secrets -o jsonpath='{.data.database-url}' | base64 -d
+kubectl get secret shoppk-secrets -o jsonpath='{.data.database-url}' | base64 -d
 
 # Check database credentials
 psql $DATABASE_URL -c "SELECT 1"
@@ -236,7 +236,7 @@ redis-cli -h redis-host -a password ping
 **Solution:**
 ```bash
 # Check memory usage
-kubectl top pods -n shopnx-production
+kubectl top pods -n shoppk-production
 
 # Increase memory limits in deployment
 kubectl patch deployment api -p '{"spec":{"template":{"spec":{"containers":[{"name":"api","resources":{"limits":{"memory":"1Gi"}}}]}}}}'
@@ -249,13 +249,13 @@ kubectl patch deployment api -p '{"spec":{"template":{"spec":{"containers":[{"na
 **Solution:**
 ```bash
 # Check certificate
-kubectl get certificate -n shopnx-production
+kubectl get certificate -n shoppk-production
 
 # Check cert-manager logs
 kubectl logs -n cert-manager deployment/cert-manager
 
 # Force certificate renewal
-kubectl renew certificate shopnx-tls -n shopnx-production
+kubectl renew certificate shoppk-tls -n shoppk-production
 ```
 
 ---
@@ -264,10 +264,10 @@ kubectl renew certificate shopnx-tls -n shopnx-production
 
 | Role | Contact | Responsibility |
 |------|---------|----------------|
-| DevOps Lead | devops@shopnx.com | Infrastructure |
-| Backend Lead | backend@shopnx.com | API issues |
-| Frontend Lead | frontend@shopnx.com | Storefront/Admin issues |
-| SRE | sre@shopnx.com | Production incidents |
+| DevOps Lead | devops@shoppk.com | Infrastructure |
+| Backend Lead | backend@shoppk.com | API issues |
+| Frontend Lead | frontend@shoppk.com | Storefront/Admin issues |
+| SRE | sre@shoppk.com | Production incidents |
 
 ---
 
@@ -286,4 +286,4 @@ kubectl renew certificate shopnx-tls -n shopnx-production
 
 - **On-call Engineer:** +1-xxx-xxx-xxxx
 - **Incident Commander:** @incident-commander
-- **Status Page:** https://status.shopnx.com
+- **Status Page:** https://status.shoppk.com

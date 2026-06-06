@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
 import { CartProvider } from '@/providers/cart-provider';
+import { ProductNotificationsProvider } from '@/providers/product-notifications-provider';
 import { Toaster } from '@/components/ui/sonner';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -30,7 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <CartProvider>
-          {children}
+          <ProductNotificationsProvider>
+            {children}
+          </ProductNotificationsProvider>
           <Toaster position="top-center" />
         </CartProvider>
       </ThemeProvider>

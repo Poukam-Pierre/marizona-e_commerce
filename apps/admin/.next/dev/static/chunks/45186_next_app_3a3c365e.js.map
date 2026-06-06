@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":["file:///home/z/my-project/node_modules/.pnpm/next%4016.0.11_%40babel%2Bcore%407.29.0_%40playwright%2Btest%401.58.2_babel-plugin-macros%403.1.0_react_17d5c3d36eec3793a8b3081f72a9d648/node_modules/next/app.js"],"sourcesContent":["module.exports = require('./dist/pages/_app')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}}]
-}

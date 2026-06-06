@@ -13,7 +13,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Divider,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -24,13 +23,13 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useAuthStore } from '@/stores/auth-store';
-import { api } from '@/services/api';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-  const { setTokens, setUser } = useAuthStore();
-  
+  const { setSession } = useAuthStore();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,18 +42,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.login({ email, password });
-      // Update auth store with tokens and user
-      setTokens({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-      });
-      setUser(response.user);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(error.message || 'Login failed. Please check your credentials.');
+        setLoading(false);
+        return;
+      }
+      setSession(data.session);
       enqueueSnackbar('Login successful!', { variant: 'success' });
-      // Use router.push for client-side navigation
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(message || 'Login failed. Please check your credentials.');
       setLoading(false);
     }
   };
@@ -66,7 +66,8 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)',
+        background:
+          'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)',
         p: 2,
       }}
     >
@@ -97,7 +98,7 @@ export default function LoginPage() {
               <InventoryIcon sx={{ fontSize: 32, color: 'white' }} />
             </Box>
             <Typography variant="h5" fontWeight={700}>
-              ShopNx Admin
+              ShopPk Admin
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Sign in to manage your store
@@ -167,33 +168,18 @@ export default function LoginPage() {
                 py: 1.5,
                 background: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #6d28d9 0%, #db2777 100%)',
+                  background:
+                    'linear-gradient(135deg, #6d28d9 0%, #db2777 100%)',
                 },
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </form>
-
-          {/* Demo Credentials */}
-          <Divider sx={{ my: 3 }} />
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: 'background.default',
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="caption" fontWeight={600} color="text.secondary">
-              Demo Credentials
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              Email: <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: 4 }}>superadmin@shopnx.com</code>
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              Password: <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: 4 }}>admin123</code>
-            </Typography>
-          </Box>
         </CardContent>
       </Card>
     </Box>

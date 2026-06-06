@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Card,
@@ -26,7 +26,6 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Paper,
   TablePagination,
 } from '@mui/material';
 import {
@@ -36,6 +35,8 @@ import {
   Folder as FolderIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { Formik, Form } from 'formik';
+import * as Yup from 'yup';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import {
   useCategories,
@@ -45,16 +46,50 @@ import {
 } from '@/hooks/use-queries';
 import type { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types';
 
+// Validation schema
+const categorySchema: Yup.ObjectSchema<CreateCategoryDto> = Yup.object({
+  name: Yup.string()
+    .required('Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be at most 100 characters'),
+  slug: Yup.string()
+    .required('Slug is required')
+    .matches(
+      /^[a-z0-9-]+$/,
+      'Slug must contain only lowercase letters, numbers, and hyphens',
+    )
+    .min(2, 'Slug must be at least 2 characters')
+    .max(100, 'Slug must be at most 100 characters'),
+  description: Yup.string().max(
+    500,
+    'Description must be at most 500 characters',
+  ),
+  image: Yup.string().url('Must be a valid URL').optional(),
+  parentId: Yup.string().optional(),
+  isActive: Yup.boolean(),
+  order: Yup.number().integer().min(0),
+});
+
 function TableSkeleton() {
   return (
     <>
       {[1, 2, 3, 4, 5].map((row) => (
         <TableRow key={row}>
-          <TableCell><Skeleton width={200} /></TableCell>
-          <TableCell><Skeleton width={120} /></TableCell>
-          <TableCell><Skeleton width={80} /></TableCell>
-          <TableCell><Skeleton width={60} /></TableCell>
-          <TableCell><Skeleton width={100} /></TableCell>
+          <TableCell>
+            <Skeleton width={200} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={120} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={80} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={60} />
+          </TableCell>
+          <TableCell>
+            <Skeleton width={100} />
+          </TableCell>
         </TableRow>
       ))}
     </>
@@ -63,7 +98,7 @@ function TableSkeleton() {
 
 export default function CategoriesPage() {
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const { data: categories = [], isLoading } = useCategories();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
@@ -76,49 +111,22 @@ export default function CategoriesPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const [formData, setFormData] = useState<CreateCategoryDto>({
+  const initialValues: CreateCategoryDto = {
     name: '',
     slug: '',
     description: '',
     parentId: '',
     isActive: true,
-    sortOrder: 0,
-  });
-
-  // Auto-generate slug
-  useEffect(() => {
-    if (formData.name && !editingCategory) {
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      setFormData(prev => ({ ...prev, slug }));
-    }
-  }, [formData.name, editingCategory]);
+    order: 0,
+  };
 
   const handleOpenCreate = () => {
     setEditingCategory(null);
-    setFormData({
-      name: '',
-      slug: '',
-      description: '',
-      parentId: '',
-      isActive: true,
-      sortOrder: 0,
-    });
     setDialogOpen(true);
   };
 
   const handleOpenEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({
-      name: category.name,
-      slug: category.slug,
-      description: category.description || '',
-      parentId: category.parentId || '',
-      isActive: category.isActive,
-      sortOrder: category.sortOrder,
-    });
     setDialogOpen(true);
   };
 
@@ -137,26 +145,28 @@ export default function CategoriesPage() {
     setDeleteDialogOpen(false);
   };
 
-  const handleSubmit = async () => {
-    if (!formData.name || !formData.slug) {
-      enqueueSnackbar('Name and slug are required', { variant: 'error' });
-      return;
-    }
-
+  const handleSubmit = async (values: CreateCategoryDto) => {
     try {
       if (editingCategory) {
         await updateCategory.mutateAsync({
           id: editingCategory.id,
-          data: formData as UpdateCategoryDto,
+          data: values as UpdateCategoryDto,
         });
-        enqueueSnackbar('Category updated successfully', { variant: 'success' });
+        enqueueSnackbar('Category updated successfully', {
+          variant: 'success',
+        });
       } else {
-        await createCategory.mutateAsync(formData);
-        enqueueSnackbar('Category created successfully', { variant: 'success' });
+        await createCategory.mutateAsync(values);
+        enqueueSnackbar('Category created successfully', {
+          variant: 'success',
+        });
       }
       handleCloseDialog();
-    } catch (error: any) {
-      enqueueSnackbar(error.message || 'Operation failed', { variant: 'error' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Operation failed';
+      enqueueSnackbar(message, { variant: 'error' });
+      throw error; // Re-throw to let Formik handle the error state
     }
   };
 
@@ -167,16 +177,49 @@ export default function CategoriesPage() {
       await deleteCategory.mutateAsync(categoryToDelete);
       enqueueSnackbar('Category deleted successfully', { variant: 'success' });
       handleCloseDelete();
-    } catch (error: any) {
-      enqueueSnackbar(error.message || 'Failed to delete category', { variant: 'error' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete category';
+      enqueueSnackbar(message, { variant: 'error' });
     }
   };
 
-  // Get root categories only for table display
-  const rootCategories = categories.filter((c) => !c.parentId);
-  const paginatedCategories = rootCategories.slice(
+  // Generate slug from name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
+  // Build tree-sorted list: root categories first, then children immediately
+  // after their parent (indented), matching standard e-commerce admin UX.
+  const buildTreeSortedList = (cats: Category[]): Array<Category & { depth: number }> => {
+    const byParent = new Map<string | null, Category[]>();
+    for (const c of cats) {
+      const key = c.parentId ?? null;
+      if (!byParent.has(key)) byParent.set(key, []);
+      byParent.get(key)!.push(c);
+    }
+    const sortFn = (a: Category, b: Category) =>
+      (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name);
+
+    const result: Array<Category & { depth: number }> = [];
+    const walk = (parentId: string | null, depth: number) => {
+      const children = byParent.get(parentId) ?? [];
+      for (const cat of children.sort(sortFn)) {
+        result.push({ ...cat, depth });
+        walk(cat.id, depth + 1);
+      }
+    };
+    walk(null, 0);
+    return result;
+  };
+
+  const allCategoriesSorted = buildTreeSortedList(categories);
+  const paginatedCategories = allCategoriesSorted.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage + rowsPerPage,
   );
 
   return (
@@ -211,7 +254,9 @@ export default function CategoriesPage() {
               ) : paginatedCategories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                    <FolderIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                    <FolderIcon
+                      sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }}
+                    />
                     <Typography color="text.secondary">
                       No categories found
                     </Typography>
@@ -219,9 +264,29 @@ export default function CategoriesPage() {
                 </TableRow>
               ) : (
                 paginatedCategories.map((category) => (
-                  <TableRow key={category.id} hover>
+                  <TableRow
+                    key={category.id}
+                    hover
+                    sx={category.depth > 0 ? { bgcolor: 'action.hover' } : undefined}
+                  >
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          pl: category.depth * 3,
+                        }}
+                      >
+                        {category.depth > 0 && (
+                          <Typography
+                            variant="caption"
+                            color="text.disabled"
+                            sx={{ userSelect: 'none' }}
+                          >
+                            {'└'}
+                          </Typography>
+                        )}
                         <Box
                           sx={{
                             width: 40,
@@ -231,26 +296,38 @@ export default function CategoriesPage() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            flexShrink: 0,
                           }}
                         >
-                          {category.imageUrl ? (
+                          {category.image ? (
                             <Box
                               component="img"
-                              src={category.imageUrl}
+                              src={category.image}
                               alt={category.name}
-                              sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 1 }}
+                              sx={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                              }}
                             />
                           ) : (
-                            <FolderIcon color="action" />
+                            <FolderIcon
+                              color="action"
+                              fontSize={category.depth > 0 ? 'small' : 'medium'}
+                            />
                           )}
                         </Box>
                         <Box>
-                          <Typography variant="body2" fontWeight={500}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={category.depth === 0 ? 600 : 400}
+                          >
                             {category.name}
                           </Typography>
-                          {category.description && (
+                          {category.parentId && (
                             <Typography variant="caption" color="text.secondary">
-                              {category.description.slice(0, 50)}...
+                              {categories.find((c) => c.id === category.parentId)?.name}
                             </Typography>
                           )}
                         </Box>
@@ -299,7 +376,7 @@ export default function CategoriesPage() {
 
         <TablePagination
           component="div"
-          count={rootCategories.length}
+          count={allCategoriesSorted.length}
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
@@ -312,88 +389,164 @@ export default function CategoriesPage() {
       </Card>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingCategory ? 'Edit Category' : 'Create Category'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Name *"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label="Slug *"
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label="Image URL"
-              value={formData.imageUrl || ''}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-            />
-            <FormControl fullWidth>
-              <InputLabel>Parent Category</InputLabel>
-              <Select
-                value={formData.parentId || ''}
-                label="Parent Category"
-                onChange={(e) => setFormData({ ...formData, parentId: e.target.value || undefined })}
-              >
-                <MenuItem value="">None (Root)</MenuItem>
-                {categories
-                  .filter((c) => c.id !== editingCategory?.id)
-                  .map((cat) => (
-                    <MenuItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              type="number"
-              label="Sort Order"
-              value={formData.sortOrder}
-              onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-              }
-              label="Active"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={createCategory.isPending || updateCategory.isPending}
-          >
-            {createCategory.isPending || updateCategory.isPending
-              ? 'Saving...'
-              : editingCategory
-              ? 'Update'
-              : 'Create'}
-          </Button>
-        </DialogActions>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Formik
+          initialValues={
+            editingCategory
+              ? {
+                  name: editingCategory.name,
+                  slug: editingCategory.slug,
+                  description: editingCategory.description || '',
+                  image: editingCategory.image || undefined,
+                  parentId: editingCategory.parentId || undefined,
+                  isActive: editingCategory.isActive,
+                  order: editingCategory.order,
+                }
+              : initialValues
+          }
+          validationSchema={categorySchema}
+          onSubmit={handleSubmit}
+          enableReinitialize
+        >
+          {({
+            values,
+            errors,
+            touched,
+            handleChange,
+            handleBlur,
+            setFieldValue,
+            isSubmitting,
+          }) => (
+            <Form>
+              <DialogTitle>
+                {editingCategory ? 'Edit Category' : 'Create Category'}
+              </DialogTitle>
+              <DialogContent>
+                <Box
+                  sx={{
+                    pt: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    label="Name"
+                    name="name"
+                    value={values.name}
+                    onChange={(e) => {
+                      handleChange(e);
+                      // Auto-generate slug when creating new category
+                      if (!editingCategory) {
+                        setFieldValue('slug', generateSlug(e.target.value));
+                      }
+                    }}
+                    onBlur={handleBlur}
+                    error={touched.name && Boolean(errors.name)}
+                    helperText={touched.name && errors.name}
+                    required
+                  />
+                  <TextField
+                    fullWidth
+                    label="Slug"
+                    name="slug"
+                    value={values.slug}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.slug && Boolean(errors.slug)}
+                    helperText={touched.slug && errors.slug}
+                    required
+                  />
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Description"
+                    name="description"
+                    value={values.description}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.description && Boolean(errors.description)}
+                    helperText={touched.description && errors.description}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Image URL"
+                    name="image"
+                    value={values.image || ''}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.image && Boolean(errors.image)}
+                    helperText={touched.image && errors.image}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Parent Category</InputLabel>
+                    <Select
+                      name="parentId"
+                      value={values.parentId || ''}
+                      label="Parent Category"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    >
+                      <MenuItem value="">None (Root)</MenuItem>
+                      {categories
+                        .filter((c) => c.id !== editingCategory?.id)
+                        .map((cat) => (
+                          <MenuItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Sort Order"
+                    name="order"
+                    value={values.order}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.order && Boolean(errors.order)}
+                    helperText={touched.order && errors.order}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        name="isActive"
+                        checked={values.isActive}
+                        onChange={handleChange}
+                      />
+                    }
+                    label="Active"
+                  />
+                </Box>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseDialog} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? 'Saving...'
+                    : editingCategory
+                      ? 'Update'
+                      : 'Create'}
+                </Button>
+              </DialogActions>
+            </Form>
+          )}
+        </Formik>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
@@ -401,7 +554,8 @@ export default function CategoriesPage() {
         <DialogTitle>Delete Category</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this category? This action cannot be undone.
+            Are you sure you want to delete this category? This action cannot be
+            undone.
           </Typography>
         </DialogContent>
         <DialogActions>

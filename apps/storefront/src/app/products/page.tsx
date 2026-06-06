@@ -222,6 +222,38 @@ function ProductsContent() {
                     </Select>
                   </div>
 
+                  <Separator />
+
+                  {/* Sort */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Sort by</label>
+                    <Select value={sortBy} onValueChange={(v) => handleFilterChange('sortBy', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt">Newest</SelectItem>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="price">Price</SelectItem>
+                        <SelectItem value="soldCount">Best Sellers</SelectItem>
+                        <SelectItem value="rating">Top Rated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Order</label>
+                    <Select value={sortOrder} onValueChange={(v) => handleFilterChange('sortOrder', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">Descending</SelectItem>
+                        <SelectItem value="asc">Ascending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {hasActiveFilters && (
                     <Button variant="outline" onClick={clearFilters} className="w-full">
                       Clear All Filters
@@ -292,7 +324,7 @@ function ProductsContent() {
 
           {/* View Mode & Items per page */}
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">View:</span>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}

@@ -1,6 +1,6 @@
-# ShopNx Quick Deployment Guide
+# ShopPk Quick Deployment Guide
 
-Get ShopNx up and running in under 10 minutes.
+Get ShopPk up and running in under 10 minutes.
 
 ## Prerequisites
 
@@ -15,8 +15,8 @@ Get ShopNx up and running in under 10 minutes.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/shopnx.git
-cd shopnx
+git clone https://github.com/your-org/shoppk.git
+cd shoppk
 
 # Create environment file
 cp .env.example .env
@@ -57,7 +57,7 @@ docker-compose exec api bun run db:seed
 | API Docs | http://localhost:3002/api/docs |
 
 **Default Admin Login:**
-- Email: `superadmin@shopnx.com`
+- Email: `superadmin@shoppk.com`
 - Password: `admin123`
 
 ---
@@ -113,7 +113,7 @@ bun run dev:all
 
 ```env
 # Database (Managed PostgreSQL)
-DATABASE_URL=postgresql://user:pass@host:5432/shopnx?schema=public
+DATABASE_URL=postgresql://user:pass@host:5432/shoppk?schema=public
 
 # Redis (Managed Redis)
 REDIS_URL=redis://:password@host:6379
@@ -155,19 +155,19 @@ docker-compose exec api bun run db:migrate:deploy
 kubectl config use-context your-cluster
 
 # Create namespace and secrets
-kubectl create namespace shopnx
-kubectl create secret generic shopnx-secrets \
+kubectl create namespace shoppk
+kubectl create secret generic shoppk-secrets \
   --from-literal=database-url='postgresql://...' \
   --from-literal=redis-url='redis://...' \
   --from-literal=jwt-secret='...' \
   --from-literal=jwt-refresh-secret='...' \
-  -n shopnx
+  -n shoppk
 
 # Deploy
 kubectl apply -k k8s/overlays/production
 
 # Check status
-kubectl get pods -n shopnx
+kubectl get pods -n shoppk
 ```
 
 ---

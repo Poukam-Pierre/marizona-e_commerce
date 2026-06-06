@@ -44,7 +44,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: {
-        enableImplicitConversion: true,
+        enableImplicitConversion: false, // Disabled to prevent Boolean("false") -> true
       },
     }),
   );
@@ -52,7 +52,7 @@ async function bootstrap() {
   // Swagger/OpenAPI
   if (nodeEnv !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('ShopNx E-Commerce API')
+      .setTitle('ShopPk E-Commerce API')
       .setDescription('Production-ready E-Commerce REST API with NestJS')
       .setVersion('1.0')
       .addBearerAuth()

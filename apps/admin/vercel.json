@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd ../.. && bun run build:admin",
+  "outputDirectory": "../../dist/apps/admin/.next",
+  "installCommand": "bun install"
+}

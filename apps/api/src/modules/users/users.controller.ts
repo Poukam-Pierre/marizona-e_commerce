@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,

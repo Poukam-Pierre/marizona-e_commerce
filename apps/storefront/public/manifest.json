@@ -1,6 +1,6 @@
 {
-  "name": "ShopNx - E-Commerce Store",
-  "short_name": "ShopNx",
+  "name": "ShopPk - E-Commerce Store",
+  "short_name": "ShopPk",
   "description": "Your one-stop shop for quality products. Fast, offline-capable shopping experience.",
   "start_url": "/",
   "scope": "/",
@@ -65,30 +65,17 @@
       "short_name": "Products",
       "description": "Browse all products",
       "url": "/products",
-      "icons": [{ "src": "/icons/shortcut-products.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Shopping Cart",
       "short_name": "Cart",
       "description": "View your shopping cart",
       "url": "/cart",
-      "icons": [{ "src": "/icons/shortcut-cart.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/homepage.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Homepage"
-    },
-    {
-      "src": "/screenshots/products.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Products Page"
-    }
-  ],
+  "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false,
   "share_target": {

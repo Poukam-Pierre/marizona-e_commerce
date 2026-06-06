@@ -1,5 +1,5 @@
 -- ============================================================================
--- ShopNx Database Initialization
+-- ShopPk Database Initialization
 -- PostgreSQL initialization script
 -- ============================================================================
 
@@ -15,11 +15,11 @@ SET timezone = 'UTC';
 CREATE SCHEMA IF NOT EXISTS public;
 
 -- Grant permissions
-GRANT ALL ON SCHEMA public TO shopnx;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO shopnx;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO shopnx;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO shopnx;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO shopnx;
+GRANT ALL ON SCHEMA public TO shoppk;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO shoppk;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO shoppk;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO shoppk;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO shoppk;
 
 -- Performance optimization: Create indexes for common queries
 -- These will be created by Prisma migrations, but can be added here for initial setup
@@ -27,5 +27,5 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO shopnx;
 -- Log initialization
 DO $$
 BEGIN
-    RAISE NOTICE 'ShopNx database initialized successfully';
+    RAISE NOTICE 'ShopPk database initialized successfully';
 END $$;

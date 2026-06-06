@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -18,19 +18,12 @@ import {
   Download,
   AlertCircle,
 } from 'lucide-react';
-import { useProduct } from '@/hooks/use-api';
+import { useProduct, useRateProduct } from '@/hooks/use-api';
 import { useCart } from '@/providers/cart-provider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,11 +31,32 @@ export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
   const { data: product, isLoading, error } = useProduct(productId);
-  const { addItem, items } = useCart();
+  const { addItem } = useCart();
+  const rateProduct = useRateProduct();
 
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >({});
+  const [directVariantId, setDirectVariantId] = useState<string | null>(null);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [hasPurchased, setHasPurchased] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [mainImgError, setMainImgError] = useState(false);
+  const [thumbImgErrors, setThumbImgErrors] = useState<Record<number, boolean>>(
+    {},
+  );
+
+  useEffect(() => {
+    try {
+      const purchased = JSON.parse(
+        localStorage.getItem('purchased-product-ids') ?? '[]',
+      ) as string[];
+      setHasPurchased(purchased.includes(productId));
+    } catch {
+      // ignore
+    }
+  }, [productId]);
 
   if (isLoading) {
     return <ProductDetailSkeleton />;
@@ -66,17 +80,70 @@ export default function ProductDetailPage() {
     );
   }
 
-  const primaryImage = product.images[selectedImage]?.url || product.image;
-  const hasDiscount = product.comparePrice && product.comparePrice > product.price;
+  // Build variant option groups from all three option slots
+  const variantOptions: Record<string, string[]> = {};
+  product.variants.forEach((v) => {
+    (
+      [
+        [v.option1Name, v.option1Value],
+        [v.option2Name, v.option2Value],
+        [v.option3Name, v.option3Value],
+      ] as [string | null, string | null][]
+    ).forEach(([optName, optValue]) => {
+      if (optName && optValue) {
+        if (!variantOptions[optName]) variantOptions[optName] = [];
+        if (!variantOptions[optName].includes(optValue)) {
+          variantOptions[optName].push(optValue);
+        }
+      }
+    });
+  });
+
+  // Find variant matching ALL currently selected options
+  const hasOptionVariants = Object.keys(variantOptions).length > 0;
+
+  const selectedVariantData = hasOptionVariants
+    ? (Object.keys(selectedOptions).length > 0
+        ? (product.variants.find((v) =>
+            Object.entries(selectedOptions).every(
+              ([optName, optValue]) =>
+                (v.option1Name === optName && v.option1Value === optValue) ||
+                (v.option2Name === optName && v.option2Value === optValue) ||
+                (v.option3Name === optName && v.option3Value === optValue),
+            ),
+          ) ?? null)
+        : null)
+    : directVariantId
+      ? (product.variants.find((v) => v.id === directVariantId) ?? null)
+      : null;
+  const selectedVariantId = selectedVariantData?.id ?? null;
+
+  // Prepend variant image to gallery when a variant with its own image is selected
+  const displayImages = selectedVariantData?.image
+    ? [
+        {
+          id: `variant-${selectedVariantData.id}`,
+          url: selectedVariantData.image,
+          alt: selectedVariantData.name,
+          order: -1,
+          isPrimary: false,
+        },
+        ...product.images.filter(
+          (img) => img.url !== selectedVariantData.image,
+        ),
+      ]
+    : product.images;
+
+  const primaryImage = displayImages[selectedImage]?.url || product.image;
+  const comparePrice = product.comparePrice;
+  const hasDiscount = comparePrice != null && comparePrice > product.price;
   const discountPercent = hasDiscount
-    ? Math.round(((product.comparePrice! - product.price) / product.comparePrice!) * 100)
+    ? Math.round(((comparePrice - product.price) / comparePrice) * 100)
     : 0;
 
-  const selectedVariantData = selectedVariant
-    ? product.variants.find((v) => v.id === selectedVariant)
-    : null;
   const currentPrice = selectedVariantData?.price || product.price;
-  const currentComparePrice = selectedVariantData?.comparePrice || product.comparePrice;
+  const currentComparePrice =
+    selectedVariantData?.comparePrice || product.comparePrice;
   const currentStock = selectedVariantData
     ? selectedVariantData.inventoryQuantity
     : product.inventoryQuantity;
@@ -84,12 +151,20 @@ export default function ProductDetailPage() {
   const isOutOfStock = product.inventoryTracked && currentStock <= 0;
   const maxQuantity = product.inventoryTracked ? currentStock : 999;
 
+  const handleOptionSelect = (optionName: string, optionValue: string) => {
+    setSelectedOptions((prev) => ({ ...prev, [optionName]: optionValue }));
+    setDirectVariantId(null);
+    setSelectedImage(0);
+    setMainImgError(false);
+  };
+
   const handleAddToCart = () => {
-    const variant = selectedVariant
-      ? product.variants.find((v) => v.id === selectedVariant)
-      : null;
-    
-    addItem(product, quantity, selectedVariant || undefined, variant?.name);
+    addItem(
+      product,
+      quantity,
+      selectedVariantId || undefined,
+      selectedVariantData?.name,
+    );
     toast.success(`${product.name} added to cart`, {
       description: quantity > 1 ? `${quantity} items` : undefined,
     });
@@ -97,29 +172,46 @@ export default function ProductDetailPage() {
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({
-        title: product.name,
-        text: product.description || '',
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.description || '',
+          url: window.location.href,
+        });
+        // return;
+      } catch {
+        // user cancelled or share unavailable — fall through
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+        return;
+      } catch {
+        // clipboard blocked (HTTP / permissions) — fall through
+      }
+    }
+
+    // Final fallback: execCommand (works on HTTP)
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = window.location.href;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
       toast.success('Link copied to clipboard');
+    } catch {
+      toast.error(
+        'Could not copy link. Please copy it manually from the address bar.',
+      );
     }
   };
-
-  // Group variants by option1Name
-  const variantOptions: Record<string, Array<{ value: string; id: string }>> = {};
-  product.variants.forEach((v) => {
-    if (v.option1Name && v.option1Value) {
-      if (!variantOptions[v.option1Name]) {
-        variantOptions[v.option1Name] = [];
-      }
-      if (!variantOptions[v.option1Name].find((opt) => opt.value === v.option1Value)) {
-        variantOptions[v.option1Name].push({ value: v.option1Value, id: v.id });
-      }
-    }
-  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,7 +229,7 @@ export default function ProductDetailPage() {
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-              {primaryImage ? (
+              {primaryImage && !mainImgError ? (
                 <Image
                   src={primaryImage}
                   alt={product.name}
@@ -145,13 +237,14 @@ export default function ProductDetailPage() {
                   className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  onError={() => setMainImgError(true)}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <Package className="h-24 w-24 text-slate-400" />
                 </div>
               )}
-              
+
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {product.isFeatured && (
@@ -170,24 +263,39 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnails */}
-            {product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {product.images.map((img, index) => (
+                {displayImages.map((img, index) => (
                   <button
                     key={img.id}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => {
+                      setSelectedImage(index);
+                      setMainImgError(false);
+                    }}
                     className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
                       selectedImage === index
                         ? 'border-primary'
                         : 'border-transparent hover:border-muted-foreground/30'
                     }`}
                   >
-                    <Image
-                      src={img.url}
-                      alt={img.alt || product.name}
-                      fill
-                      className="object-cover"
-                    />
+                    {thumbImgErrors[index] ? (
+                      <div className="flex items-center justify-center h-full bg-slate-100 dark:bg-slate-800">
+                        <Package className="h-6 w-6 text-slate-400" />
+                      </div>
+                    ) : (
+                      <Image
+                        src={img.url}
+                        alt={img.alt || product.name}
+                        fill
+                        className="object-cover"
+                        onError={() =>
+                          setThumbImgErrors((prev) => ({
+                            ...prev,
+                            [index]: true,
+                          }))
+                        }
+                      />
+                    )}
                   </button>
                 ))}
               </div>
@@ -210,14 +318,14 @@ export default function ProductDetailPage() {
             <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
 
             {/* Rating */}
-            {product.rating && (
+            {product.rating != null && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(product.rating!)
+                        i < Math.floor(product.rating ?? 0)
                           ? 'fill-amber-400 text-amber-400'
                           : 'text-slate-300'
                       }`}
@@ -230,14 +338,52 @@ export default function ProductDetailPage() {
               </div>
             )}
 
+            {/* Rate this product — only shown to verified buyers */}
+            {hasPurchased ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {product.rating != null
+                    ? 'Your rating:'
+                    : 'Be the first to rate:'}
+                </span>
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      onClick={() =>
+                        rateProduct.mutate({ id: product.id, rating: i + 1 })
+                      }
+                      onMouseEnter={() => setHoveredRating(i + 1)}
+                      onMouseLeave={() => setHoveredRating(0)}
+                      className={`h-5 w-5 cursor-pointer transition-colors ${
+                        i < hoveredRating
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-slate-300 hover:text-amber-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                {rateProduct.isPending && (
+                  <span className="text-xs text-muted-foreground">Saving…</span>
+                )}
+                {rateProduct.isSuccess && (
+                  <span className="text-xs text-emerald-600">Thanks!</span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Purchase this product to leave a rating.
+              </p>
+            )}
+
             {/* Price */}
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold text-primary">
-                Rp {currentPrice.toLocaleString('id-ID')}
+                FCFA {currentPrice.toLocaleString('id-ID')}
               </span>
               {currentComparePrice && currentComparePrice > currentPrice && (
                 <span className="text-lg text-muted-foreground line-through">
-                  Rp {currentComparePrice.toLocaleString('id-ID')}
+                  FCFA {currentComparePrice.toLocaleString('id-ID')}
                 </span>
               )}
             </div>
@@ -247,23 +393,35 @@ export default function ProductDetailPage() {
               {product.inventoryTracked ? (
                 currentStock > 0 ? (
                   currentStock <= product.lowStockThreshold ? (
-                    <Badge variant="outline" className="text-amber-600 border-amber-600">
+                    <Badge
+                      variant="outline"
+                      className="text-amber-600 border-amber-600"
+                    >
                       <AlertCircle className="h-3 w-3 mr-1" />
                       Only {currentStock} left
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                    <Badge
+                      variant="outline"
+                      className="text-emerald-600 border-emerald-600"
+                    >
                       <Check className="h-3 w-3 mr-1" />
                       In Stock
                     </Badge>
                   )
                 ) : (
-                  <Badge variant="outline" className="text-red-600 border-red-600">
+                  <Badge
+                    variant="outline"
+                    className="text-red-600 border-red-600"
+                  >
                     Out of Stock
                   </Badge>
                 )
               ) : (
-                <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                <Badge
+                  variant="outline"
+                  className="text-emerald-600 border-emerald-600"
+                >
                   <Check className="h-3 w-3 mr-1" />
                   Available
                 </Badge>
@@ -280,23 +438,58 @@ export default function ProductDetailPage() {
             {/* Variants */}
             {product.variants.length > 0 && (
               <div className="space-y-4">
-                {Object.entries(variantOptions).map(([optionName, values]) => (
-                  <div key={optionName}>
-                    <label className="text-sm font-medium mb-2 block">{optionName}</label>
+                {hasOptionVariants ? (
+                  Object.entries(variantOptions).map(([optionName, values]) => (
+                    <div key={optionName}>
+                      <label className="text-sm font-medium mb-2 block">
+                        {optionName}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {values.map((optValue) => (
+                          <Button
+                            key={optValue}
+                            variant={
+                              selectedOptions[optionName] === optValue
+                                ? 'default'
+                                : 'outline'
+                            }
+                            size="sm"
+                            onClick={() =>
+                              handleOptionSelect(optionName, optValue)
+                            }
+                          >
+                            {optValue}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Fallback: variants have no option fields — select by name
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Variant
+                    </label>
                     <div className="flex flex-wrap gap-2">
-                      {values.map((opt) => (
+                      {product.variants.map((v) => (
                         <Button
-                          key={opt.id}
-                          variant={selectedVariant === opt.id ? 'default' : 'outline'}
+                          key={v.id}
+                          variant={
+                            directVariantId === v.id ? 'default' : 'outline'
+                          }
                           size="sm"
-                          onClick={() => setSelectedVariant(opt.id)}
+                          onClick={() => {
+                            setDirectVariantId(v.id);
+                            setSelectedImage(0);
+                            setMainImgError(false);
+                          }}
                         >
-                          {opt.value}
+                          {v.name}
                         </Button>
                       ))}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
@@ -316,7 +509,9 @@ export default function ProductDetailPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                  onClick={() =>
+                    setQuantity(Math.min(maxQuantity, quantity + 1))
+                  }
                   disabled={quantity >= maxQuantity}
                 >
                   <Plus className="h-4 w-4" />
@@ -345,7 +540,9 @@ export default function ProductDetailPage() {
               <Card className="bg-muted/50">
                 <CardContent className="p-4">
                   <h3 className="font-medium mb-2">Seller Information</h3>
-                  <p className="text-sm text-muted-foreground">{product.ownerName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {product.ownerName}
+                  </p>
                   {product.ownerWhatsapp && (
                     <a
                       href={`https://wa.me/${product.ownerWhatsapp.replace(/\D/g, '')}`}
@@ -373,8 +570,10 @@ export default function ProductDetailPage() {
                       </h3>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                         After purchase, you will receive a download link.
-                        {product.downloadLimit && ` Maximum ${product.downloadLimit} downloads.`}
-                        {product.downloadExpiry && ` Link expires in ${product.downloadExpiry} days.`}
+                        {product.downloadLimit &&
+                          ` Maximum ${product.downloadLimit} downloads.`}
+                        {product.downloadExpiry &&
+                          ` Link expires in ${product.downloadExpiry} days.`}
                       </p>
                     </div>
                   </div>
@@ -391,7 +590,8 @@ export default function ProductDetailPage() {
                     <div>
                       <h3 className="font-medium">Shipping</h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Delivery available nationwide. Shipping cost calculated at checkout.
+                        Delivery available nationwide. Shipping cost calculated
+                        at checkout.
                       </p>
                     </div>
                   </div>

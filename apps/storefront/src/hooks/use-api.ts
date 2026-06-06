@@ -67,19 +67,31 @@ export function useCreateOrder() {
   });
 }
 
-export function useOrder(id: string) {
+export function useOrder(id: string, token: string) {
   return useQuery({
     queryKey: queryKeys.order(id),
-    queryFn: () => api.getOrder(id),
-    enabled: !!id,
+    queryFn: () => api.getOrder(id, token),
+    enabled: !!id && !!token,
+    // Auto-refresh every 60 s — status is updated manually by admin
+    refetchInterval: 60_000,
   });
 }
 
 // WhatsApp
-export function useWhatsAppLink(orderId: string) {
-  return useQuery({
-    queryKey: ['whatsapp', orderId],
-    queryFn: () => api.getWhatsAppLink(orderId),
-    enabled: !!orderId,
+export function useWhatsAppLink(orderId: string, lookupToken: string) {
+  return useMutation({
+    mutationFn: () => api.getWhatsAppLink(orderId, lookupToken),
+  });
+}
+
+// Rating
+export function useRateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, rating }: { id: string; rating: number }) =>
+      api.rateProduct(id, rating),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.product(id) });
+    },
   });
 }

@@ -21,6 +21,11 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Allow any HTTPS host so product images from arbitrary merchant sources load correctly.
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
     // Optimize images
     formats: ['image/avif', 'image/webp'],
@@ -89,6 +94,22 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      {
+        // Service worker must never be cached by CDN/proxy.
+        // Chrome has a 24h hard cap, but an explicit no-cache ensures
+        // the browser always revalidates and picks up new SW versions immediately.
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
           },
         ],
       },

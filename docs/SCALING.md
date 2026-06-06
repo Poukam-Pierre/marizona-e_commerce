@@ -1,8 +1,8 @@
-# ShopNx Scaling Strategy
+# ShopPk Scaling Strategy
 
 ## Overview
 
-This document outlines the scaling strategy for the ShopNx e-commerce platform, covering horizontal scaling, database optimization, CDN configuration, and caching strategies.
+This document outlines the scaling strategy for the ShopPk e-commerce platform, covering horizontal scaling, database optimization, CDN configuration, and caching strategies.
 
 ---
 
@@ -276,12 +276,12 @@ const CACHE_KEYS = {
 
 | Pattern | Setting | Value |
 |---------|---------|-------|
-| `shopnx.com/_next/static/*` | Cache Level | Cache Everything |
-| `shopnx.com/_next/static/*` | Edge Cache TTL | 1 year |
-| `shopnx.com/images/*` | Cache Level | Cache Everything |
-| `shopnx.com/images/*` | Edge Cache TTL | 30 days |
-| `shopnx.com/api/*` | Cache Level | Bypass |
-| `shopnx.com/sw.js` | Cache Level | Bypass |
+| `shoppk.com/_next/static/*` | Cache Level | Cache Everything |
+| `shoppk.com/_next/static/*` | Edge Cache TTL | 1 year |
+| `shoppk.com/images/*` | Cache Level | Cache Everything |
+| `shoppk.com/images/*` | Edge Cache TTL | 30 days |
+| `shoppk.com/api/*` | Cache Level | Bypass |
+| `shoppk.com/sw.js` | Cache Level | Bypass |
 
 #### Cache Headers
 
@@ -345,7 +345,7 @@ location /sw.js {
 ```yaml
 # Prometheus alerts
 groups:
-  - name: shopnx-scaling
+  - name: shoppk-scaling
     rules:
       - alert: HighCPUUsage
         expr: container_cpu_usage_seconds_total{container="api"} > 0.8

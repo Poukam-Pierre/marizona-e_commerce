@@ -49,9 +49,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuthStore();
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      window.location.href = '/login';
+    }
   };
 
   const drawerContent = (
@@ -84,7 +87,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </Typography>
           </Box>
           <Typography variant="h6" fontWeight={700}>
-            ShopNx
+            ShopPk
           </Typography>
         </Box>
         {isMobile && (
@@ -97,9 +100,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Navigation */}
       <List sx={{ flex: 1, px: 1, py: 2 }}>
         {menuItems.map((item) => {
-          const isActive = pathname === item.href || 
+          const isActive =
+            pathname === item.href ||
             (item.href !== '/dashboard' && pathname.startsWith(item.href));
-          
+
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
@@ -150,11 +154,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               bgcolor: 'primary.main',
             }}
           >
-            {user?.name?.charAt(0).toUpperCase() || 'A'}
+            {(user?.user_metadata?.name ?? user?.email)
+              ?.charAt(0)
+              .toUpperCase() || 'A'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" fontWeight={600} noWrap>
-              {user?.name || 'Admin'}
+              {user?.user_metadata?.name ?? user?.email ?? 'Admin'}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
               {user?.role || 'Admin'}
@@ -175,7 +181,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
             <LogoutIcon />
           </ListItemIcon>
-          <ListItemText primary="Logout" primaryTypographyProps={{ fontWeight: 500 }} />
+          <ListItemText
+            primary="Logout"
+            primaryTypographyProps={{ fontWeight: 500 }}
+          />
         </ListItemButton>
       </Box>
     </Box>

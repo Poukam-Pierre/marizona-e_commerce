@@ -23,7 +23,7 @@ export default function CartPage() {
   const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
 
   const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString('id-ID')}`;
+    return `FCFA ${price.toLocaleString('id-ID')}`;
   };
 
   if (items.length === 0) {
@@ -128,6 +128,7 @@ export default function CartPage() {
                           onClick={() =>
                             updateQuantity(item.productId, item.quantity - 1, item.variantId)
                           }
+                          disabled={item.quantity <= 1}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -137,7 +138,18 @@ export default function CartPage() {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() =>
-                            updateQuantity(item.productId, item.quantity + 1, item.variantId)
+                            updateQuantity(
+                              item.productId,
+                              Math.min(
+                                item.inventoryTracked ? item.inventoryQuantity : 999,
+                                item.quantity + 1,
+                              ),
+                              item.variantId,
+                            )
+                          }
+                          disabled={
+                            item.inventoryTracked &&
+                            item.quantity >= item.inventoryQuantity
                           }
                         >
                           <Plus className="h-3 w-3" />
