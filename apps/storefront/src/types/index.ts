@@ -113,7 +113,8 @@ export interface OrderItem {
     | 'LINK_EXPIRED'
     | 'LIMIT_REACHED'
     | null;
-  downloadCount: number;
+  downloadRemaining: number | null;
+  downloadCount?: number;
   downloadLimit: number | null;
   downloadExpiry: string | null;
 }

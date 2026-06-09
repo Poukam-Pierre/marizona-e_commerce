@@ -134,6 +134,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const items = (order.items ?? []).map((item: any) => {
       let downloadEligible     = false;
       let downloadBlockedReason: string | null = null;
+      const downloadRemaining =
+        item.downloadLimit !== null
+          ? Math.max(item.downloadLimit - (item.downloadCount ?? 0), 0)
+          : null;
 
       if (item.productType === 'DIGITAL') {
         if (isRevoked) {
@@ -151,7 +155,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Never expose downloadCount internals to the customer
       const { downloadCount: _dc, ...rest } = item;
-      return { ...rest, downloadEligible, downloadBlockedReason };
+      return {
+        ...rest,
+        downloadEligible,
+        downloadBlockedReason,
+        downloadRemaining,
+      };
     });
 
     const { lookupTokenExpiry: _exp, ...safeOrder } = order;

@@ -141,8 +141,8 @@ function DigitalDownloadCard({
 
   if (item.downloadEligible) {
     const remaining =
-      item.downloadLimit !== null
-        ? item.downloadLimit - item.downloadCount
+      typeof item.downloadRemaining === 'number' && Number.isFinite(item.downloadRemaining)
+        ? item.downloadRemaining
         : null;
     const expiryDate = item.downloadExpiry
       ? new Date(item.downloadExpiry).toLocaleDateString('en-GB', {
