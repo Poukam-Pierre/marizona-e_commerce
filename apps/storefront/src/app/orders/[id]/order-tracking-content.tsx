@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -23,7 +24,8 @@ import {
   MapPin,
   Phone,
 } from 'lucide-react';
-import { useOrder } from '@/hooks/use-api';
+import { useOrder, queryKeys } from '@/hooks/use-api';
+import { useOrderRealtime } from '@/hooks/use-order-realtime';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,12 +137,12 @@ function DigitalDownloadCard({
 }) {
   if (item.productType !== 'DIGITAL') return null;
 
-  const downloadHref = `/api/v1/orders/${orderId}/items/${item.id}/download?token=${encodeURIComponent(token)}`;
+  const downloadHref = `${process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`}/orders-download-item?orderId=${encodeURIComponent(orderId)}&itemId=${encodeURIComponent(item.id)}&token=${encodeURIComponent(token)}`;
 
   if (item.downloadEligible) {
     const remaining =
-      item.downloadLimit !== null
-        ? item.downloadLimit - item.downloadCount
+      typeof item.downloadRemaining === 'number' && Number.isFinite(item.downloadRemaining)
+        ? item.downloadRemaining
         : null;
     const expiryDate = item.downloadExpiry
       ? new Date(item.downloadExpiry).toLocaleDateString('en-GB', {
@@ -386,9 +388,18 @@ export default function OrderTrackingContent() {
   const searchParams = useSearchParams();
   const orderId = params.id as string;
   const token = searchParams.get('token') ?? '';
+  const queryClient = useQueryClient();
 
   const { data: order, isLoading, isError } = useOrder(orderId, token);
   const { copied, copy } = useCopyToClipboard();
+
+  // Real-time status updates via Supabase postgres_changes
+  useOrderRealtime(orderId, {
+    onStatusChange: () => {
+      // Invalidate and refetch order data when admin updates status
+      queryClient.invalidateQueries({ queryKey: queryKeys.order(orderId) });
+    },
+  });
 
   useEffect(() => {
     if (orderId && token) {

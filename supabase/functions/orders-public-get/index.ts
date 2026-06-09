@@ -72,6 +72,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
           ...rateLimitHeaders(rlResult),
         },
       },
@@ -134,6 +136,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const items = (order.items ?? []).map((item: any) => {
       let downloadEligible     = false;
       let downloadBlockedReason: string | null = null;
+      const downloadRemaining =
+        item.downloadLimit !== null
+          ? Math.max(item.downloadLimit - (item.downloadCount ?? 0), 0)
+          : null;
 
       if (item.productType === 'DIGITAL') {
         if (isRevoked) {
@@ -151,7 +157,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       // Never expose downloadCount internals to the customer
       const { downloadCount: _dc, ...rest } = item;
-      return { ...rest, downloadEligible, downloadBlockedReason };
+      return {
+        ...rest,
+        downloadEligible,
+        downloadBlockedReason,
+        downloadRemaining,
+      };
     });
 
     const { lookupTokenExpiry: _exp, ...safeOrder } = order;
@@ -171,6 +182,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
           ...rateLimitHeaders(rlResult),
         },
       },
