@@ -1,8 +1,8 @@
 // ─── Cache configuration ───────────────────────────────────────────────────
 const CACHE_VERSION = 'v1';
-const STATIC_CACHE  = `static-${CACHE_VERSION}`;
-const PAGES_CACHE   = `pages-${CACHE_VERSION}`;
-const ALL_CACHES    = [STATIC_CACHE, PAGES_CACHE];
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const PAGES_CACHE = `pages-${CACHE_VERSION}`;
+const ALL_CACHES = [STATIC_CACHE, PAGES_CACHE];
 
 // Assets to pre-cache on install
 const PRECACHE_URLS = ['/', '/offline', '/manifest.json'];
@@ -51,8 +51,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never intercept non-GET, cross-origin API calls, or Next.js internal routes
+  // Never intercept non-GET, unsupported protocols, API calls, or Next.js internal routes
   if (request.method !== 'GET') return;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.pathname.startsWith('/api/')) return;
   if (url.pathname.startsWith('/_next/data/')) return;
 
@@ -125,91 +126,91 @@ self.addEventListener('message', (event) => {
 
 // Listen for push events
 self.addEventListener('push', (event) => {
-    console.log('[Service Worker] Push received:', event);
+  console.log('[Service Worker] Push received:', event);
 
-    if (!event.data) {
-        console.log('[Service Worker] Push event but no data');
+  if (!event.data) {
+    console.log('[Service Worker] Push event but no data');
+    return;
+  }
+
+  const handlePushNotification = async () => {
+    try {
+      // Check if any client window is currently visible
+      const clients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      });
+
+      const hasVisibleClient = clients.some(
+        client => client.visibilityState === 'visible'
+      );
+
+      // If user has the app open and visible, skip push notification
+      // They'll receive the real-time WebSocket notification instead
+      if (hasVisibleClient) {
+        console.log('[Service Worker] App is visible, skipping push notification');
         return;
+      }
+
+      const data = event.data.json();
+      const { title, body, icon, badge, data: notificationData } = data;
+
+      const options = {
+        body,
+        icon: icon || '/icon-192x192.png',
+        badge: badge || '/badge-72x72.png',
+        vibrate: [200, 100, 200],
+        tag: notificationData?.productId || 'product-notification',
+        data: notificationData,
+        actions: [
+          {
+            action: 'open',
+            title: 'View Product',
+          },
+          {
+            action: 'close',
+            title: 'Dismiss',
+          },
+        ],
+      };
+
+      await self.registration.showNotification(title, options);
+      console.log('[Service Worker] Push notification displayed');
+    } catch (error) {
+      console.error('[Service Worker] Error handling push:', error);
     }
+  };
 
-    const handlePushNotification = async () => {
-        try {
-            // Check if any client window is currently visible
-            const clients = await self.clients.matchAll({
-                type: 'window',
-                includeUncontrolled: true
-            });
-
-            const hasVisibleClient = clients.some(
-                client => client.visibilityState === 'visible'
-            );
-
-            // If user has the app open and visible, skip push notification
-            // They'll receive the real-time WebSocket notification instead
-            if (hasVisibleClient) {
-                console.log('[Service Worker] App is visible, skipping push notification');
-                return;
-            }
-
-            const data = event.data.json();
-            const { title, body, icon, badge, data: notificationData } = data;
-
-            const options = {
-                body,
-                icon: icon || '/icon-192x192.png',
-                badge: badge || '/badge-72x72.png',
-                vibrate: [200, 100, 200],
-                tag: notificationData?.productId || 'product-notification',
-                data: notificationData,
-                actions: [
-                    {
-                        action: 'open',
-                        title: 'View Product',
-                    },
-                    {
-                        action: 'close',
-                        title: 'Dismiss',
-                    },
-                ],
-            };
-
-            await self.registration.showNotification(title, options);
-            console.log('[Service Worker] Push notification displayed');
-        } catch (error) {
-            console.error('[Service Worker] Error handling push:', error);
-        }
-    };
-
-    event.waitUntil(handlePushNotification());
+  event.waitUntil(handlePushNotification());
 });
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
-    console.log('[Service Worker] Notification clicked:', event.action);
+  console.log('[Service Worker] Notification clicked:', event.action);
 
-    event.notification.close();
+  event.notification.close();
 
-    if (event.action === 'close') {
-        return;
-    }
+  if (event.action === 'close') {
+    return;
+  }
 
-    // Open the product page
-    const url = event.notification.data?.url || '/';
+  // Open the product page
+  const url = event.notification.data?.url || '/';
 
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            // Check if there's already a window open
-            for (const client of clientList) {
-                if (client.url.includes(url) && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            // If not, open a new window
-            if (clients.openWindow) {
-                return clients.openWindow(url);
-            }
-        })
-    );
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if there's already a window open
+      for (const client of clientList) {
+        if (client.url.includes(url) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If not, open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
+  );
 });
 
 

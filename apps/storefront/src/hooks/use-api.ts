@@ -72,8 +72,11 @@ export function useOrder(id: string, token: string) {
     queryKey: queryKeys.order(id),
     queryFn: () => api.getOrder(id, token),
     enabled: !!id && !!token,
-    // Auto-refresh every 60 s — status is updated manually by admin
-    refetchInterval: 60_000,
+    // Aggressive refresh for real-time status tracking
+    refetchInterval: 10_000,      // Poll every 10s
+    staleTime: 0,                  // Always consider stale (fetch on mount/focus)
+    refetchOnWindowFocus: true,    // Refetch when user returns to tab
+    refetchOnReconnect: true,      // Refetch on network reconnect
   });
 }
 
